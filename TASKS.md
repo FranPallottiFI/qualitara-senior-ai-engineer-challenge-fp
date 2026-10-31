@@ -240,7 +240,7 @@ deps: [T-06]
 
 ---
 
-### [ ] T-08 · risk:low · Clean-machine run, hand verification, README and AI log
+### [x] T-08 · risk:low · Clean-machine run, hand verification, README and AI log
 deps: [T-02, T-07]
 
 **Scope** (PLAN §11 row 8):

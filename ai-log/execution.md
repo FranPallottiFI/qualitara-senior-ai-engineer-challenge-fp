@@ -224,3 +224,32 @@ T-07 verdict: PASS. I checked every "Done when" item by execution against the ru
 I found no scope or constitution problems. The changes are limited to `app/main.py`, `app/db/queries.py`, `app/templates/report.html` and `tests/integration/test_page.py`. The SQL is parameterized, week dates come from SQL `generate_series`, and the page reuses `report.build`.
 
 Not covered: I had no real browser, so the HTTP checks above are the only reload-survival evidence. The form is a plain GET with no JavaScript, so nothing else owns the control state. There is no `PENDING HUMAN` line for this task.
+
+### T-08 · start · risk:low
+
+### T-08 · attempt 1 · self-check (partial: agent-verifiable items only)
+- README: all six TODO sections drafted from PLAN.md (stack, interpretation, decisions/trade-offs, known limitations incl. silent deduplication and the ~3x location false alarms, deferred/another day incl. event-type filter and outcome rates, AI usage incl. "Before the clock" and the tools/models line as specified by the engineer). Three `[Fran to confirm]` marks remain in README.md.
+- AI-log reflection drafted at ai-log/03-reflection.md from raw-prompts.md, 02-planning-notes.md and this file; 9 `[Fran to confirm]` marks (model versions, advisor-chat transcript, harness provenance detail, CHALLENGE.md final decision, recruiter-email reason, TLS note, strict week parsing, why the T-03 log call was rejected).
+- Done-when 4: `grep -n "TODO" README.md` -> no output; `grep -nEi "another day|duplicate" README.md` -> matches; `grep -nEi "pip install|uvx|poetry" README.md` -> no output.
+- Done-when 5: `grep -rniE "tools|model" ai-log/*reflection*` -> matches (ai-log/03-reflection.md).
+- Not done, human-only: Done-when 1 (fresh clone `docker compose -p dash247-clean up -d --build`, curl 200, elapsed time <= 15 min), 2 (`docker compose -p dash247-clean run --rm app uv run --frozen pytest -q`), 3 (PLAN §9 SQL = 42 on the fresh clone), 6 (`docker compose -p dash247-clean down -v`). Note for the engineer: the README test command assumes the DB is already migrated and seeded (run after `up`).
+- Nothing committed.
+
+### T-08 · attempt 1 · human-command · AWAITING
+Clean-machine run per TASKS.md T-08 scope; engineer also reviews/resolves the `[Fran to confirm]` items in README.md and ai-log/03-reflection.md.
+
+### T-08 · attempt 1 · human-command · AWAITING (engineer reports a manual build; evidence not yet pasted)
+Engineer: "i did build it manually and everything seems fine". No output pasted yet, so Done-when 1-3 and 6 are unverified. Still needed: curl -si http://localhost:8000/ status line from the fresh clone, clone-to-first-page elapsed time (<= 15 min), pytest -q result from `docker compose -p dash247-clean run --rm app uv run --frozen pytest -q`, the PLAN §9 SQL result (42), and confirmation that `down -v` was run.
+
+### T-08 · attempt 1 · human-command · PASS
+Engineer pasted the fresh-clone run (git clone of the GitHub remote into $env:TEMP\dash247-clean; `docker compose stop` on the main stack first):
+1. `docker compose -p dash247-clean up -d --build` -> app Built, db Healthy (3.3s), app Started (3.4s). `curl.exe -si http://localhost:8000/ | Select-Object -First 1` -> `HTTP/1.1 200 OK`. Timestamps: 18:22:44 before `up`, 18:23:10 after the curl, i.e. about 26 s. All 10 Dockerfile layers were CACHED, so this is a warm-cache figure, not a cold first build (image pulls and `uv sync` were not exercised).
+2. `docker compose -p dash247-clean run --rm app uv run --frozen pytest -q` -> `56 passed, 1 warning in 2.49s` (the Starlette httpx deprecation warning). 56 matches the tree after T-07, so the clone contained T-07; the README/reflection drafts were not yet pushed, so the clone's README was the skeleton (run/test commands identical).
+3. PLAN §9 SQL via `docker compose -p dash247-clean exec -T db psql ...` -> `42`.
+4. `docker compose -p dash247-clean down -v` -> app, db, volume dash247-clean_pgdata and network removed.
+After cleanup, `docker compose start` in the main directory printed `service "db" has no container to start`: the main stack has no containers and needs `docker compose up -d` (not `start`). Not checked by the agent.
+Observation: the psql command line appears echoed inside the pytest output; read as the engineer's next command typed ahead. [Fran to confirm]
+
+### T-08 · attempt 1 · self-check · PASS
+Done-when 1 (200 from fresh clone, elapsed <= 15 min: ~26 s warm cache), 2 (56 passed), 3 (42), 4 (no TODO; "another day|duplicate" match), 5 (reflection has "tools"/"model"), 6 (down -v ran) all satisfied.
+PENDING HUMAN: resolve the `[Fran to confirm]` marks in README.md (3) and ai-log/03-reflection.md (9) before submission; they are drafts under Fran's name.

@@ -732,3 +732,132 @@ app is up, continue
   Not covered: I had no real browser, so the HTTP checks above are the only reload-survival evidence. The form is a plain GET with no JavaScript, so nothing else owns the control state. There is no `PENDING HUMAN` line for this task.
 </agent-message>
 ```
+
+### 2026-10-31T18:14:48-03:00 · session `bd61c2c8`
+
+```text
+next. Draft the README sections from PLAN.md and the AI-log reflection from raw-prompts.md,
+ai-log/02-planning-notes.md and ai-log/execution.md. Mark anything you're unsure I said or
+decided as [Fran to confirm]. In the tools/models line include: Claude Code with Opus for
+planning, reviews and T-03â€“T-06, Sonnet for routine tasks and the validator; and a separate
+Claude chat I used as a planning advisor to weigh options and review the harness, with every
+decision mine. Add a "Before the clock" note: the harness was adapted from a colleague's prior
+submission of this challenge, which I studied beforehand. Don't commit
+```
+
+### 2026-10-31T18:20:35-03:00 · session `bd61c2c8`
+
+```text
+i did build it manually and everything seems fine
+```
+
+### 2026-10-31T18:28:32-03:00 · session `bd61c2c8`
+
+```text
+
+
+<pasted_content id="33b4">
+PS C:\Users\Windows\AppData\Local> cd "C:\Users\Windows\Desktop\FDE Challenge\qualitara-senior-ai-engineer-challenge-fp"
+PS C:\Users\Windows\Desktop\FDE Challenge\qualitara-senior-ai-engineer-challenge-fp> docker compose stop
+PS C:\Users\Windows\Desktop\FDE Challenge\qualitara-senior-ai-engineer-challenge-fp> cd $env:TEMP
+PS C:\Users\Windows\AppData\Local\Temp> Remove-Item -Recurse -Force dash247-clean -ErrorAction SilentlyContinue
+PS C:\Users\Windows\AppData\Local\Temp> git clone https://github.com/FranPallottiFI/qualitara-senior-ai-engineer-challenge-fp.git dash247-clean
+Cloning into 'dash247-clean'...
+remote: Enumerating objects: 175, done.
+remote: Counting objects: 100% (175/175), done.
+remote: Compressing objects: 100% (110/110), done.
+remote: Total 175 (delta 59), reused 166 (delta 50), pack-reused 0 (from 0)
+Receiving objects: 100% (175/175), 344.12 KiB | 1.00 MiB/s, done.
+Resolving deltas: 100% (59/59), done.
+PS C:\Users\Windows\AppData\Local\Temp> cd dash247-clean
+PS C:\Users\Windows\AppData\Local\Temp\dash247-clean> Get-Date+
+Get-Date+ : El tï¿½rmino 'Get-Date+' no se reconoce como nombre de un cmdlet, funciï¿½n, archivo de script o programa ejecutable. Compruebe si escribiï¿½ correctamente el nombre o, si incluyï¿½ una 
+ruta de acceso, compruebe que dicha ruta es correcta e intï¿½ntelo de nuevo.
+En lï¿½nea: 1 Carï¿½cter: 1
++ Get-Date+
++ ~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (Get-Date+:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+PS C:\Users\Windows\AppData\Local\Temp\dash247-clean> Get-Date 
+
+sï¿½bado, 31 de octubre de 2026 18:22:44
+
+
+PS C:\Users\Windows\AppData\Local\Temp\dash247-clean> docker compose -p dash247-clean up -d --build
+Compose now can delegate build to bake for better performances
+Just set COMPOSE_BAKE=true
+[+] Building 2.0s (18/18) FINISHED                                                                                                                                        docker:desktop-linux
+ => [app internal] load build definition from Dockerfile                                                                                                                                  0.0s
+ => => transferring dockerfile: 495B                                                                                                                                                      0.0s 
+ => [app internal] load metadata for ghcr.io/astral-sh/uv:0.13.6                                                                                                                          1.1s 
+ => [app internal] load metadata for docker.io/library/python:3.12-slim                                                                                                                   1.6s 
+ => [app internal] load .dockerignore                                                                                                                                                     0.0s
+ => => transferring context: 116B                                                                                                                                                         0.0s 
+ => [app] FROM ghcr.io/astral-sh/uv:0.13.6@sha256:af22a52f5eafef3d78e551599d405c02df61919d18028f0cea8eda93bc9986d0                                                                        0.0s 
+ => => resolve ghcr.io/astral-sh/uv:0.13.6@sha256:af22a52f5eafef3d78e551599d405c02df61919d18028f0cea8eda93bc9986d0                                                                        0.0s 
+ => [app stage-0  1/10] FROM docker.io/library/python:3.12-slim@sha256:aa943ce411423c7582288f18707ff66eddcbaeb510502d747a72aeb34f30d159                                                   0.0s 
+ => => resolve docker.io/library/python:3.12-slim@sha256:aa943ce411423c7582288f18707ff66eddcbaeb510502d747a72aeb34f30d159                                                                 0.0s 
+ => [app internal] load build context                                                                                                                                                     0.1s 
+ => => transferring context: 2.69MB                                                                                                                                                       0.1s 
+ => CACHED [app stage-0  2/10] COPY --from=ghcr.io/astral-sh/uv:0.13.6 /uv /uvx /bin/                                                                                                     0.0s
+ => CACHED [app stage-0  3/10] WORKDIR /app                                                                                                                                               0.0s 
+ => CACHED [app stage-0  4/10] COPY pyproject.toml uv.lock .python-version ./                                                                                                             0.0s 
+ => CACHED [app stage-0  5/10] RUN uv sync --frozen                                                                                                                                       0.0s 
+ => CACHED [app stage-0  6/10] COPY alembic.ini ./                                                                                                                                        0.0s 
+ => CACHED [app stage-0  7/10] COPY app/ app/                                                                                                                                             0.0s 
+ => CACHED [app stage-0  8/10] COPY migrations/ migrations/                                                                                                                               0.0s 
+ => CACHED [app stage-0  9/10] COPY seed/ seed/                                                                                                                                           0.0s 
+ => CACHED [app stage-0 10/10] COPY tests/ tests/                                                                                                                                         0.0s 
+ => [app] exporting to image                                                                                                                                                              0.1s 
+ => => exporting layers                                                                                                                                                                   0.0s 
+ => => exporting manifest sha256:0f836bf5f6b8d633def33b57856e9f55423d1d71b85a49fd2523d84c9ea05750                                                                                         0.0s
+ => => exporting config sha256:106c9f58ba920eed6650640302d0ea61516638bcc1fff584d3a74202e14fbda6                                                                                           0.0s 
+ => => exporting attestation manifest sha256:0b89d391053261e946f459d2a17e46ee10b1fb3e234fd6828ff0a6c21cf6f5b7                                                                             0.0s 
+ => => exporting manifest list sha256:3e84761545f81d74afef58e3cdecc1f81ec35c6f968671d8ed9ca0eeff05f55b                                                                                    0.0s 
+ => => naming to docker.io/library/dash247-clean-app:latest                                                                                                                               0.0s 
+ => => unpacking to docker.io/library/dash247-clean-app:latest                                                                                                                            0.0s 
+ => [app] resolving provenance for metadata file                                                                                                                                          0.0s 
+[+] Running 5/5
+ ? app                            Built                                                                                                                                                   0.0s 
+ ? Network dash247-clean_default  Created                                                                                                                                                 0.0s 
+ ? Volume "dash247-clean_pgdata"  Created                                                                                                                                                 0.0s 
+ ? Container dash247-clean-db-1   Healthy                                                                                                                                                 3.3s 
+ ? Container dash247-clean-app-1  Started                                                                                                                                                 3.4s 
+PS C:\Users\Windows\AppData\Local\Temp\dash247-clean> curl.exe -si http://localhost:8000/ | Select-Object -First 1
+HTTP/1.1 200 OK
+PS C:\Users\Windows\AppData\Local\Temp\dash247-clean> Get-Date
+
+sï¿½bado, 31 de octubre de 2026 18:23:10
+
+
+PS C:\Users\Windows\AppData\Local\Temp\dash247-clean> docker compose -p dash247-clean run --rm app uv run --frozen pytest -q
+[+] Creating 1/1
+ ? Container dash247-clean-db-1  Running                                                                                                                                                  0.0s 
+docker compose -p dash247-clean exec -T db psql -U app -d app -c "SELECT count(*) FROM (SELECT DISTINCT location, event_type, occurred_at, duration_seconds, outcome FROM activity_events WHERE account_id=1 AND occurred_at >= ('2026-07-06'::timestamp AT TIME ZONE 'America/Chicago') AT TIME ZONE 'UTC' AND occurred_at < ('2026-07-13'::timestamp AT TIME ZONE 'America/Chicago') AT TIME ZONE 'UTC') x;"
+........................................................                                                                                                                                [100%]
+====================================================================================== warnings summary =======================================================================================
+.venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /app/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+56 passed, 1 warning in 2.49s
+PS C:\Users\Windows\AppData\Local\Temp\dash247-clean> docker compose -p dash247-clean exec -T db psql -U app -d app -c "SELECT count(*) FROM (SELECT DISTINCT location, event_type, occurred_at, duration_seconds, outcome FROM activity_events WHERE account_id=1 AND occurred_at >= ('2026-07-06'::timestamp AT TIME ZONE 'America/Chicago') AT TIME ZONE 'UTC' AND occurred_at < ('2026-07-13'::timestamp AT TIME ZONE 'America/Chicago') AT TIME ZONE 'UTC') x;"
+ count 
+-------
+    42
+(1 row)
+
+PS C:\Users\Windows\AppData\Local\Temp\dash247-clean> docker compose -p dash247-clean down -v
+[+] Running 4/4
+ ? Container dash247-clean-app-1  Removed                                                                                                                                                 1.5s 
+ ? Container dash247-clean-db-1   Removed                                                                                                                                                 1.0s 
+ ? Volume dash247-clean_pgdata    Removed                                                                                                                                                 0.2s 
+ ? Network dash247-clean_default  Removed                                                                                                                                                 1.0s 
+PS C:\Users\Windows\AppData\Local\Temp\dash247-clean> cd "C:\Users\Windows\Desktop\FDE Challenge\qualitara-senior-ai-engineer-challenge-fp"
+PS C:\Users\Windows\Desktop\FDE Challenge\qualitara-senior-ai-engineer-challenge-fp> docker compose start
+service "db" has no container to start
+</pasted_content id="33b4">
+
+```
