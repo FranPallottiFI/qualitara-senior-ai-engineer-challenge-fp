@@ -190,6 +190,7 @@ Checked clean: timezones, event-type values, location strings (`s10`).
   are zero or near zero.
 - **Outcome rates** (missed-call %, conversion): denominators are tiny and rates swing 4–44%
   monthly at small accounts (`survey/s04`). They need their own method.
+  - **LLM Report on the data** Would use an LLM to explain the meaning of the overall data report for a customer above all locations for that customer, as understanding the information from the table without previous statistics knowledge seems rather hard for customers.
 
 ## 6. Stack and dependencies
 

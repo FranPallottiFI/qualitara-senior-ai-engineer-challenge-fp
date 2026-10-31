@@ -471,3 +471,11 @@ After the engineer's rebuild: `curl -s "http://localhost:8000/?account_id=6&week
 
 ### T-11 · attempt 2 · human-command · AWAITING
 `docker compose up -d --build app` (live check of the legend line).
+
+### T-11 · attempt 2 · human-command · PASS
+Engineer ran `docker compose up -d --build app`; reported "app is up".
+
+### T-11 · attempt 2 · self-check · PASS
+Live: `curl -s "http://localhost:8000/?account_id=6&week=2026-07-20"` contains `<p class="note" id="locations-legend">Left: the last 4 weeks, judged against this location's typical 4 weeks. Right: this week's count next to a typical week, shown for context, not judged; single weeks are too small to judge per location.</p>`.
+All T-11 Done-when items (1-4, 5-7 as amended by extensions 2-3) met; evidence in the entries above.
+Observed, not acted on: PLAN.md has an unstaged engineer edit in §5 "Next iteration" adding "LLM Report on the data", with no "Changes after approval" entry. Flagged to the engineer.

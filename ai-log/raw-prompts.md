@@ -1123,3 +1123,9 @@ app is upAdd one line above the locations table (page text only): "Left: the las
 this location's typical 4 weeks. Right: this week's count next to a typical week, shown for
 context, not judged; single weeks are too small to judge per location." Include it in T-11.
 ```
+
+### 2026-10-31T19:33:39-03:00 · session `bd61c2c8`
+
+```text
+app is up
+```

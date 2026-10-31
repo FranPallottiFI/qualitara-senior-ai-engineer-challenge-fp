@@ -316,9 +316,8 @@ coerce silently"; README: "Invalid input is rejected, never coerced").
 
 ---
 
-### [~] T-11 · risk:low · Count line leads with a flagged account total
+### [x] T-11 · risk:low · Count line leads with a flagged account total
 deps: [T-10]
-> awaiting: docker compose up -d --build app
 
 **Origin:** found by the engineer testing the page by hand. Account 6, week 2026-07-13: the
 account total is "Below expected range" (50 vs 52–95), but the count line reads "0 of 15 locations
