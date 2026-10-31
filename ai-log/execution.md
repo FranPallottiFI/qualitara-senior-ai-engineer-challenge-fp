@@ -142,3 +142,39 @@ Scope: the changed files are only `/app/domain/__init__.py`, `/app/domain/baseli
 Tests: none mock the DB, and the assertions would fail on wrong code. The domain code is pure, so `.claude/rules/tests.md` has no mocked-DB issue to flag.
 
 No PENDING HUMAN item for this task.
+
+### T-06 · start · risk:high
+
+### T-06 · attempt 1 · self-check (pre-validator notes)
+- Touched T-04 file `app/db/queries.py`: `account_weeks(conn, account_id, week=None)` now also returns `week_start` (requested week or latest complete week) and `week_end` (its Sunday), computed in SQL, so Python never computes week/window end dates. Still two queries per request; T-04 tests still pass (8).
+- Malformed week is rejected strictly: `Query(pattern=^\d{4}-\d{2}-\d{2}$)` + `date.fromisoformat`, so "20260720" and timestamps give 422 instead of being coerced (pydantic lax date parsing would accept unix timestamps).
+- `uv run pytest tests/integration/test_api.py -q` -> 26 passed first run; full suite 49 passed; ruff check/format clean; mypy Success (8 files).
+- Extra: PLAN §8 examples reproduced exactly: account 6 default week total {count 87, baseline 72.5, range 52..95, within, 8}; week 2026-03-23 total {71, null, null, not_enough_history, 7}, Site A {week_count 6, window 03-02..03-29, count 19, not_enough_history, 4}.
+- Warning seen: StarletteDeprecationWarning "Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead." Not acted on (dependency change = human decision).
+
+### T-06 · attempt 1 · validator · PASS
+T-06 verdict: PASS
+
+Criterion 1: met.
+- `uv run pytest tests/integration/test_api.py -q` gives 26 passed.
+- All six named tests are present: `test_account_verdicts_and_baselines_match_sql_analysis` (parametrized over 11 weeks), `test_location_window_matches_sql_analysis`, `test_history_cutoffs`, `test_single_location_account_has_no_total_verdict`, `test_account_without_events_returns_explicit_empty_200` and `test_invalid_params_are_rejected` (9 cases).
+- I compared the pinned account 6 totals with the real output of `docs/analysis/02-method-series.sql`. Counts, `med8`, the C-column ranges (e.g. 52..96, 46..88) and verdicts all match. The C column shows high at 06-01 and 06-08, low at 07-13, and within range elsewhere.
+- `test_location_window_matches_sql_analysis` asserts Site A at 2026-07-20 has count 22, expected 24 and range 12..38.
+- `test_history_cutoffs` asserts `weeks_of_history` 7 and `not_enough_history` at 03-23, judged at 03-30; Site A `not_enough_history` at 04-13, judged at 04-20.
+- The tests run through `TestClient` against the real seeded DB with no mocks, and the assertions are specific rather than "is not None".
+
+Criterion 2: met. `test_default_week_is_the_latest_complete_week` asserts that with no `week` parameter, `week.start == latest_complete_week == "2026-07-20"`.
+
+Criterion 3: met.
+- `uv run pytest -q`: 49 passed.
+- `ruff check .`: all checks passed.
+- `ruff format --check .`: 33 files already formatted.
+- `mypy app`: no issues in 8 source files.
+
+Scope and rules:
+- Changed files are `app/report.py`, `app/main.py`, `app/db/queries.py` and `tests/integration/test_api.py`, all in scope. The `queries.py` change only adds `week_start` and `week_end` to the account SQL, and the SQL stays parameterized.
+- `week_end` and the default week are computed in SQL.
+- `report.py` only slices the returned rows and counts them to get `weeks_of_history`. The one date check in Python is the `weekday() != 0` Monday validation, which I take to be input validation, not date arithmetic.
+- There is no HTML. The 404 and 422 mapping is in `app/main.py`.
+
+PENDING HUMAN: none for this task. The hand-verified figure belongs to `tests/integration/test_queries.py`, not to T-06.

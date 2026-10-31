@@ -163,7 +163,7 @@ deps: [T-01]
 
 ---
 
-### [ ] T-06 · risk:high · `report.build` and the JSON endpoint
+### [x] T-06 · risk:high · `report.build` and the JSON endpoint
 deps: [T-04, T-05]
 
 **Scope** (PLAN §4, §7, §8, §9):

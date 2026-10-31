@@ -36,6 +36,9 @@ class AccountWeeks:
     # NULL only if activity_events is empty for the whole dataset.
     first_complete_week: date | None
     latest_complete_week: date | None
+    # The selected week (default: the latest complete week) and its Sunday, computed in SQL.
+    week_start: date | None
+    week_end: date | None
 
 
 @dataclass(frozen=True)
@@ -52,32 +55,49 @@ class SeriesRow:
 #   first complete week  = the local week after the one containing the earliest event;
 #   latest complete week = the local week before the one containing the latest event.
 # date_trunc('week', ...) truncates to Monday 00:00 (ISO weeks), so weeks are Monday-Sunday.
+# The selected week is the requested one, or the latest complete week when none is given
+# (NULL parameter); its end (Sunday) is computed here so Python never does date arithmetic.
+# The requested week is echoed back unvalidated; the caller checks it against the bounds.
 ACCOUNT_WEEKS_SQL: Final = """
 WITH params AS (
-    SELECT %s::integer AS account_id
+    SELECT %s::integer AS account_id, %s::date AS week
 ),
 dataset AS (
     SELECT min(occurred_at) AS earliest_utc, max(occurred_at) AS latest_utc
     FROM activity_events
+),
+bounds AS (
+    SELECT
+        a.id,
+        a.name,
+        a.timezone,
+        (date_trunc('week', (d.earliest_utc AT TIME ZONE 'UTC') AT TIME ZONE a.timezone)
+            + interval '1 week')::date AS first_complete_week,
+        (date_trunc('week', (d.latest_utc AT TIME ZONE 'UTC') AT TIME ZONE a.timezone)
+            - interval '1 week')::date AS latest_complete_week,
+        p.week AS requested_week
+    FROM accounts a
+    JOIN params p ON a.id = p.account_id
+    CROSS JOIN dataset d
 )
 SELECT
-    a.id,
-    a.name,
-    a.timezone,
-    (date_trunc('week', (d.earliest_utc AT TIME ZONE 'UTC') AT TIME ZONE a.timezone)
-        + interval '1 week')::date AS first_complete_week,
-    (date_trunc('week', (d.latest_utc AT TIME ZONE 'UTC') AT TIME ZONE a.timezone)
-        - interval '1 week')::date AS latest_complete_week
-FROM accounts a
-JOIN params p ON a.id = p.account_id
-CROSS JOIN dataset d
+    id,
+    name,
+    timezone,
+    first_complete_week,
+    latest_complete_week,
+    COALESCE(requested_week, latest_complete_week) AS week_start,
+    (COALESCE(requested_week, latest_complete_week) + interval '6 days')::date AS week_end
+FROM bounds
 """
 
 
-def account_weeks(conn: psycopg.Connection[Any], account_id: int) -> AccountWeeks | None:
-    """The account and its selectable week bounds, or None if the account does not exist."""
+def account_weeks(
+    conn: psycopg.Connection[Any], account_id: int, week: date | None = None
+) -> AccountWeeks | None:
+    """The account, its selectable week bounds and the selected week, or None if unknown."""
     with conn.cursor(row_factory=class_row(AccountWeeks)) as cur:
-        cur.execute(ACCOUNT_WEEKS_SQL, (account_id,))
+        cur.execute(ACCOUNT_WEEKS_SQL, (account_id, week))
         return cur.fetchone()
 
 
