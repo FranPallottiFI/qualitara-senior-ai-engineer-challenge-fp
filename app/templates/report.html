@@ -1,0 +1,106 @@
+{#- Renders a WeeklyReport (app/report.py). All state comes from the URL; no JavaScript. -#}
+{%- set labels = {
+    "high": "Above expected range",
+    "low": "Below expected range",
+    "within_expected_range": "Within expected range",
+    "not_enough_history": "Not enough history to judge",
+    "too_little_volume": "Too little volume to judge",
+} -%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weekly activity report</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 60rem; padding: 0 1rem; color: #222; }
+  form { display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; margin-bottom: 1.5rem; }
+  label { display: flex; flex-direction: column; font-size: 0.85rem; gap: 0.25rem; }
+  table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1.5rem; }
+  th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid #ddd; }
+  th { font-size: 0.85rem; color: #555; }
+  tr.flagged td { background: #fff4e5; font-weight: 600; }
+  .error { border: 1px solid #c33; background: #fdecec; padding: 0.75rem 1rem; }
+  .note { color: #555; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<h1>Weekly activity report</h1>
+
+<form method="get" action="/">
+  <label>Account
+    <select name="account_id">
+      {%- for a in accounts %}
+      <option value="{{ a.id }}"{% if a.id == selected_account %} selected{% endif %}>{{ a.name }}</option>
+      {%- endfor %}
+    </select>
+  </label>
+  <label>Week (Monday)
+    <select name="week">
+      {%- for w in weeks %}
+      <option value="{{ w.isoformat() }}"{% if selected_week and w == selected_week %} selected{% endif %}>{{ w.isoformat() }}</option>
+      {%- endfor %}
+    </select>
+  </label>
+  <button type="submit">Show report</button>
+</form>
+
+{% if error %}
+<p class="error" role="alert">{{ error }}</p>
+{% elif report %}
+<h2>{{ report.account.name }}</h2>
+<p class="note">Week {{ report.week.start.isoformat() }} to {{ report.week.end.isoformat() }}
+  ({{ report.account.timezone }}, Monday to Sunday).</p>
+
+{% if not report.locations %}
+<p>No activity recorded for this account.</p>
+{% else %}
+{%- set flagged = report.locations | selectattr("window.verdict", "in", ["high", "low"]) | list | length -%}
+{%- set not_judged = report.locations | selectattr("window.verdict", "in", ["not_enough_history", "too_little_volume"]) | list | length -%}
+<p id="count-line"><strong>{{ flagged }} of {{ report.locations | length }} locations outside expected range{% if not_judged %}; {{ not_judged }} not judged{% endif %}</strong></p>
+
+{% if report.total %}
+<h3>Account total (this week)</h3>
+<table id="total">
+  <thead><tr><th>Events</th><th>Expected</th><th>Range</th><th>Verdict</th></tr></thead>
+  <tbody>
+    <tr data-verdict="{{ report.total.verdict }}">
+      <td>{{ report.total.count }}</td>
+      <td>{% if report.total.baseline is not none %}{{ report.total.baseline }}{% else %}-{% endif %}</td>
+      <td>{% if report.total.range %}{{ report.total.range.low }} to {{ report.total.range.high }}{% else %}-{% endif %}</td>
+      <td>{{ labels[report.total.verdict] }}</td>
+    </tr>
+  </tbody>
+</table>
+{% endif %}
+
+<h3>Locations</h3>
+<table id="locations">
+  <thead>
+    <tr>
+      <th>Location</th>
+      <th>This week</th>
+      <th>Last 4 weeks</th>
+      <th>Expected (last 4 weeks)</th>
+      <th>Range (last 4 weeks)</th>
+      <th>Verdict (last 4 weeks)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {%- for row in report.locations %}
+    <tr data-location="{{ row.location }}" data-verdict="{{ row.window.verdict }}"{% if row.window.verdict in ["high", "low"] %} class="flagged"{% endif %}>
+      <td>{{ row.location }}</td>
+      <td>{{ row.week_count }}</td>
+      <td>{{ row.window.count }}</td>
+      <td>{% if row.window.expected is not none %}{{ row.window.expected }}{% else %}-{% endif %}</td>
+      <td>{% if row.window.range %}{{ row.window.range.low }} to {{ row.window.range.high }}{% else %}-{% endif %}</td>
+      <td>{{ labels[row.window.verdict] }} (last 4 weeks)</td>
+    </tr>
+    {%- endfor %}
+  </tbody>
+</table>
+<p class="note">Location verdicts look at the last 4 weeks and react to sustained changes, not one-week dips.</p>
+{% endif %}
+{% endif %}
+</body>
+</html>

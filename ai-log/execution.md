@@ -178,3 +178,49 @@ Scope and rules:
 - There is no HTML. The 404 and 422 mapping is in `app/main.py`.
 
 PENDING HUMAN: none for this task. The hand-verified figure belongs to `tests/integration/test_queries.py`, not to T-06.
+
+### T-07 · start · risk:high
+
+### T-07 · attempt 1 · self-check (pre-validator notes)
+- Added to T-04 file `app/db/queries.py`: `account_options()` (account selector) and `selectable_weeks(first, latest)` (SQL generate_series, so Python does no date arithmetic for the week selector). Not in T-07's listed scope but required by "week select bounded by first..latest complete week".
+- Agent mistake 1: test asserted a mix of flagged/unflagged rows in burst week 2026-06-01; there ALL account-6 location windows contain the burst, so all are flagged. Replaced with week 2026-05-18 (Site G high, Site A within).
+- Agent mistake 2 (caught before running): first choice of "flagged first" week would have passed even without sorting if the flagged location were alphabetically first. Searched all accounts/weeks via the JSON endpoint; chose account 6 / 2026-05-18, where Site G (flagged) sorts before Site A only because of flagged-first ordering. Test also asserts page row order == JSON order.
+- `uv run pytest tests/integration/test_page.py -q` -> 7 passed; full suite 56 passed; ruff check/format clean; mypy Success (8 files); `grep -c "<script" app/templates/report.html` -> 0.
+- Done-when 4 (live server) needs the engineer: `docker compose up -d --build app`.
+
+### T-07 · attempt 1 · human-command · AWAITING
+`docker compose up -d --build app` (image bakes in app/ and templates; running container predates T-06/T-07).
+
+### T-07 · attempt 1 · human-command · PASS
+Engineer ran `docker compose up -d --build app`; reported "app is up".
+
+### T-07 · attempt 1 · self-check · live server vs JSON (Done-when 4, agent evidence)
+curl http://localhost:8000/?account_id=A&week=W and curl .../api/accounts/A/weekly-report?week=W, compared cell by cell (week count, 4-week count, expected, range, verdict label, row order, total row, selected account/week options):
+- account 6 / 2026-07-20: 15 rows + total match, selected = 6 / 2026-07-20, count line "0 of 15 locations outside expected range".
+- account 6 / 2026-05-18: 15 rows match, first row Site G (high) = JSON first row.
+- account 1 / 2026-07-06: 6 rows + total match, selected = 1 / 2026-07-06 (state comes from the URL, not defaults).
+Script: scratchpad cmp.py (not part of the repo). Validator to re-check independently.
+
+### T-07 · attempt 1 · validator · PASS
+T-07 verdict: PASS. I checked every "Done when" item by execution against the running server.
+
+1. PASS. `uv run pytest -q` ran the full suite, which includes `tests/integration/test_page.py`: 56 passed. Reading `test_page_renders_state_from_url_and_matches_json` confirms it asserts each required point:
+   - account 6 and week 2026-07-20 selected, with a 200;
+   - count line N, M and K equal to the values derived from the JSON;
+   - a flagged row first (Site G, week 2026-05-18);
+   - a non-zero "not judged" count for 2026-03-30;
+   - 422 with "Monday" in the body for 2026-07-21;
+   - "No activity recorded" for account 20.
+   The test uses the real seeded DB and nothing is mocked. The extra tests cover error statuses and the week selector bounds.
+2. PASS. `grep -c "<script" app/templates/report.html` returns 0.
+3. PASS. `uv run pytest -q` gives 56 passed, `uv run ruff check .` passes, and `uv run mypy app` reports no issues.
+4. PASS. I ran curl against http://localhost:8000 and compared each page with its JSON endpoint.
+   - **account 6, week 2026-07-20:** HTTP 200 and both controls selected (`<option value="6" selected>`, `<option value="2026-07-20" selected>`). All 15 rows match the JSON on week count, 4-week count, expected value, range and verdict, in the same order. The count line reads "0 of 15 locations outside expected range".
+   - **account 6, week 2026-05-18:** Site G (verdict high) is the first row. The page and JSON orders are identical for all 15 rows, and the values match. The count line reads "1 of 15".
+   - **account 1, week 2026-07-06:** account 1 and 2026-07-06 are selected instead, so the state comes from the URL. All 6 rows match the JSON.
+   - **errors and empty state:** `/?account_id=6&week=2026-07-21` returns 422. `/?account_id=20` contains "No activity recorded for this account."
+   - **labels:** verdicts read in plain language with "(last 4 weeks)", and the column headers carry "last 4 weeks".
+
+I found no scope or constitution problems. The changes are limited to `app/main.py`, `app/db/queries.py`, `app/templates/report.html` and `tests/integration/test_page.py`. The SQL is parameterized, week dates come from SQL `generate_series`, and the page reuses `report.build`.
+
+Not covered: I had no real browser, so the HTTP checks above are the only reload-survival evidence. The form is a plain GET with no JavaScript, so nothing else owns the control state. There is no `PENDING HUMAN` line for this task.

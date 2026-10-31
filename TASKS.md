@@ -201,7 +201,7 @@ deps: [T-04, T-05]
 
 ---
 
-### [ ] T-07 · risk:high · Page
+### [x] T-07 · risk:high · Page
 deps: [T-06]
 
 **Scope** (PLAN §1, §5, §8 Page and Count line):

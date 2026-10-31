@@ -177,3 +177,34 @@ def weekly_series(conn: psycopg.Connection[Any], account_id: int, week: date) ->
     with conn.cursor(row_factory=class_row(SeriesRow)) as cur:
         cur.execute(WEEKLY_SERIES_SQL, (account_id, week, SERIES_WEEKS))
         return cur.fetchall()
+
+
+@dataclass(frozen=True)
+class AccountOption:
+    id: int
+    name: str
+
+
+# Accounts for the page's account selector (stands in for the logged-in admin, PLAN Q11).
+ACCOUNT_OPTIONS_SQL: Final = "SELECT id, name FROM accounts ORDER BY id"
+
+
+def account_options(conn: psycopg.Connection[Any]) -> list[AccountOption]:
+    with conn.cursor(row_factory=class_row(AccountOption)) as cur:
+        cur.execute(ACCOUNT_OPTIONS_SQL)
+        return cur.fetchall()
+
+
+# Every selectable Monday between two bounds that account_weeks() returned, newest first, for
+# the page's week selector. SQL generates the dates so Python never does date arithmetic.
+SELECTABLE_WEEKS_SQL: Final = """
+SELECT g::date AS week_start
+FROM generate_series(%s::date, %s::date, interval '1 week') AS g
+ORDER BY week_start DESC
+"""
+
+
+def selectable_weeks(conn: psycopg.Connection[Any], first: date, latest: date) -> list[date]:
+    with conn.cursor() as cur:
+        cur.execute(SELECTABLE_WEEKS_SQL, (first, latest))
+        return [row[0] for row in cur.fetchall()]
