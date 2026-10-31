@@ -97,7 +97,7 @@ deps: [T-01]
 
 ---
 
-### [ ] T-04 · risk:high · Weekly series SQL
+### [x] T-04 · risk:high · Weekly series SQL
 deps: [T-03]
 
 **Scope** (PLAN §4 Definitions, §7 Queries and Timestamp trap, §9 hand-verified number):
