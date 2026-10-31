@@ -18,7 +18,7 @@ Markers: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` needs human d
 
 ---
 
-### [ ] T-01 · risk:low · Project setup
+### [x] T-01 · risk:low · Project setup
 deps: []
 
 **Scope** (PLAN §6, §7):
@@ -112,9 +112,9 @@ deps: [T-03]
   - all SQL commented and parameterized.
 - Tests: `tests/integration/conftest.py`, which fails loudly when the DB is missing and never
   skips, and `tests/integration/test_queries.py`.
-- **Deviation to confirm:** `.claude/rules/tests.md` says integration tests go "through the
-  FastAPI app". The endpoint doesn't exist until T-06, so these tests call `queries.py` against
-  the real seeded DB. There is still no mocking. Human to confirm before this task starts.
+- **Confirmed deviation (engineer, 2026-10-31):** `.claude/rules/tests.md` says integration
+  tests go "through the FastAPI app". The endpoint doesn't exist until T-06, so these tests call
+  `queries.py` directly against the real seeded DB, with no mocking.
 
 **Done when**
 1. `uv run pytest tests/integration/test_queries.py -q` passes, including:
@@ -201,7 +201,7 @@ deps: [T-04, T-05]
 
 ---
 
-### [ ] T-07 · risk:low · Page
+### [ ] T-07 · risk:high · Page
 deps: [T-06]
 
 **Scope** (PLAN §1, §5, §8 Page and Count line):
@@ -226,6 +226,15 @@ deps: [T-06]
    - account 20's page contains "No activity recorded".
 2. `grep -c "<script" app/templates/report.html` returns 0.
 3. `uv run pytest -q`, `uv run ruff check .` and `uv run mypy app` exit 0.
+4. **Reload survival over HTTP against the running server**, checked by the validator. This is
+   an explicit challenge requirement. The human first runs `docker compose up -d --build app`.
+   - `curl -s "http://localhost:8000/?account_id=6&week=2026-07-20"` returns HTML in which:
+     - the account control has account 6 selected and the week control has 2026-07-20 selected;
+     - every location row's week count, 4-week count, expected value, range and verdict equal
+       `curl -s "http://localhost:8000/api/accounts/6/weekly-report?week=2026-07-20"`, in the
+       same flagged-first order.
+   - Repeating the page request with a different account and week (e.g. `account_id=1&week=2026-07-06`)
+     shows those values selected instead, so the state comes from the URL, not from defaults.
 
 **Out of scope:** styling beyond legibility.
 

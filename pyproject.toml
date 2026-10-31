@@ -1,0 +1,41 @@
+[project]
+name = "dash247"
+version = "0.1.0"
+description = "DASH-247 weekly location activity report"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "jinja2",
+    "psycopg[binary]",
+    "alembic",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "httpx",
+    "ruff",
+    "mypy",
+]
+
+[tool.uv]
+# Lower bound only: an exact pin would break reviewers' uv installs.
+required-version = ">=0.8.0"
+# Cooling-off window: absolute RFC 3339 timestamp (reproducible lock).
+exclude-newer = "2026-10-24T00:00:00Z"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -417,3 +417,32 @@ the same task as the code they protect. Put the README skeleton in an early task
 </pasted_content id="0c20">
 
 ```
+
+### 2026-10-31T17:22:15-03:00 · session `14842a51`
+
+```text
+
+
+<pasted_content id="0c20">
+- T-04: confirmed. Its tests call queries.py directly against the real DB, no mocking.
+- T-07 (page): change risk to high. Reload survival is an explicit challenge requirement, so the
+  validator should check it over HTTP (request with params, confirm the controls render with
+  those values selected and the table matches the JSON endpoint).
+Don't change anything else.
+</pasted_content id="0c20">
+
+```
+
+### 2026-10-31T17:23:52-03:00 · session `bd61c2c8`
+
+```text
+/task-loop
+```
+
+### 2026-10-31T17:27:24-03:00 · session `bd61c2c8`
+
+```text
+done on another terminal now continuePS C:\Users\Windows\Desktop\FDE Challenge\qualitara-senior-ai-engineer-challenge-fp> uv lock --system-certs
+Using CPython 3.12.10 interpreter at: C:\Users\Windows\AppData\Local\Programs\Python\Python312\python.exe
+Resolved 38 packages in 1.27s
+```
