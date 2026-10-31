@@ -28,7 +28,8 @@ def _report(client: TestClient, account_id: int, week: str | None = None) -> dic
 def _location(body: dict[str, Any], name: str) -> dict[str, Any]:
     matches = [row for row in body["locations"] if row["location"] == name]
     assert len(matches) == 1
-    return matches[0]
+    match: dict[str, Any] = matches[0]
+    return match
 
 
 # Account 6 total, from ./scripts/sql-ro.sh "$(cat docs/analysis/02-method-series.sql)",

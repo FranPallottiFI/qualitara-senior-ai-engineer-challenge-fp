@@ -285,7 +285,7 @@ fall outside an existing task's scope.
 
 ---
 
-### [ ] T-10 · risk:high · Strict week parsing shared by the page and the API
+### [x] T-10 · risk:high · Strict week parsing shared by the page and the API
 deps: [T-09]
 
 **Origin:** T-09 final review finding (SHOULD), approved by the engineer. The page route calls

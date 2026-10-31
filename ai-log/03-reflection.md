@@ -2,7 +2,7 @@
 
 Drafted by the agent, reviewed and corrected by me (Fran). Sources: `raw-prompts.md`,
 `00-advisor-chat.md`, `02-planning-notes.md` and `execution.md`. Quotes of Fran are verbatim from
-`raw-prompts.md`. Two reasons Fran has not yet supplied are marked **[Fran to confirm]**.
+`raw-prompts.md`.
 
 ## Tools and models (one honest line)
 
@@ -82,9 +82,9 @@ Several of these were first raised in the advisor chat; Fran decided them and se
   the reviewer's reason".
 - **Placeholders in Fran's prompts.** At 17:11–17:12 a prompt contained the literal text "I didn't
   email the recruiter because <your real reason>" (an advisor template, per
-  `00-advisor-chat.md`). The agent did not invent a reason; `PLAN.md` and the README state only the
-  facts. The same happened again in the T-09 decisions ("Recruiter: <my real reason>").
-  [Fran to confirm: the reason, if it should be stated]
+  `00-advisor-chat.md`). The agent did not invent a reason; `PLAN.md` states only the facts. The
+  same happened twice more in the T-09 decisions. Fran then gave the reason: "I didn't want to
+  block on a reply inside the time budget."
 
 ## 4. The reviewer subagent caught the AI's plan errors (before any code)
 
@@ -136,7 +136,7 @@ Build (from `execution.md`):
   even without any sorting, because the flagged location was alphabetically first. The final test
   uses account 6, week 2026-05-18, where Site G (flagged) would sort after Site A by name, and it
   also asserts the page's row order equals the JSON's.
-- **T-08:** the agent's own count of `[Fran to confirm]` markers in the README was off by one
+- **T-08:** the agent's own count of unresolved markers in the README was off by one
   (logged 3, actually 2), caught by the final reviewer.
 
 ## 6. Where Fran redirected or tightened the work
@@ -148,8 +148,6 @@ Build (from `execution.md`):
   `high`: "Reload survival is an explicit challenge requirement, so the validator should check it
   over HTTP." The validator then ran curl against the rebuilt server and compared the page with
   the JSON.
-- **T-03's log check.** The agent tried to read `docker compose ps` and `docker compose logs` in
-  one call; Fran rejected the call and pasted the logs by hand. [Fran to confirm: why]
 - **The hand-verified number.** Fran re-ran the §9 SQL by hand (42), plus the agent's two
   counterfactual queries from PLAN §9: without `DISTINCT` the count is 43, and with `DISTINCT` but
   UTC week bounds it is also 43. The counterfactual figures were the agent's; Fran re-ran them.

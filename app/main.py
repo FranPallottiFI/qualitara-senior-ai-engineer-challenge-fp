@@ -1,8 +1,9 @@
+import re
 from datetime import date
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -13,13 +14,17 @@ from app.db.queries import connect
 app = FastAPI(title="DASH-247")
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
-# Strict YYYY-MM-DD only: no timestamps, no basic ISO format, nothing coerced silently.
-WEEK_PATTERN = r"^\d{4}-\d{2}-\d{2}$"
+# Strict YYYY-MM-DD only: no timestamps, no basic or week-date ISO forms (the stdlib ISO parser
+# alone accepts "20260720" and "2026-W30-1"), nothing coerced silently.
+WEEK_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
 def parse_week(raw: str | None) -> date | None:
+    """The one parsing path for `week`, shared by the JSON endpoint and the page."""
     if raw is None or raw == "":
         return None
+    if WEEK_PATTERN.fullmatch(raw) is None:
+        raise report.InvalidWeek(f"week {raw!r} is not a valid date (YYYY-MM-DD)")
     try:
         return date.fromisoformat(raw)
     except ValueError as exc:
@@ -29,7 +34,7 @@ def parse_week(raw: str | None) -> date | None:
 @app.get("/api/accounts/{account_id}/weekly-report", response_model=report.WeeklyReport)
 def weekly_report(
     account_id: int,
-    week: Annotated[str | None, Query(pattern=WEEK_PATTERN)] = None,
+    week: str | None = None,
 ) -> report.WeeklyReport:
     try:
         with connect() as conn:

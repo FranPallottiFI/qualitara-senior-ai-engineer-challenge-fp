@@ -372,3 +372,45 @@ PENDING HUMAN: recruiter reason and T-03 docker-call reason (both sent as "<my r
 ### T-09 · follow-up (docs)
 - Reflection §2 item 4 annotation updated: synthetic dispersion now sourced to `00-advisor-chat.md` 15:33 (row added by Fran).
 - Recruiter and T-03 reasons: the reply again contained template text ("<e.g. \"I didn't want to block on a reply inside the time budget\">", "<your reason, or: \"drop that line\">"), not a stated reason. Not filled; markers kept.
+
+### T-09 · follow-up (docs) 2
+- Recruiter reason (Fran, verbatim): "I didn't want to block on a reply inside the time budget." Added to reflection §3 and README assumptions intro (PLAN.md untouched, frozen).
+- T-03 docker-call line: Fran said "drop it"; removed from reflection §6.
+- Remaining marker: README Time line (final figure pending from Fran).
+- Correction: README Time line already filled by Fran ("Actual total: 5 hs"); no `[Fran to confirm]` markers remain in README.md or ai-log/03-reflection.md.
+
+### T-10 · start · risk:high
+
+### T-10 · attempt 1 · self-check (pre-validator notes)
+- `parse_week` in app/main.py now applies a compiled `\d{4}-\d{2}-\d{2}` fullmatch before the stdlib parser; the API route no longer uses FastAPI's `Query(pattern=...)`, so page and API share one path. API malformed responses are now `{"detail": "<message>"}` strings (previously FastAPI's validation list for pattern failures).
+- Page error test gained `20260720` and `2026-W30-1`; test_api.py `_location` annotates a local (mypy app tests).
+- `uv run pytest tests/integration/test_page.py tests/integration/test_api.py -q` -> 35 passed; full suite 58 passed; ruff check/format clean; `mypy app` Success (8 files); `mypy app tests` Success (13 files).
+- Done-when 2: first run `grep -c fromisoformat app/main.py` -> 2 (one was a comment mentioning it); comment reworded, now 1. Criterion unchanged.
+- Checked: non-ASCII digits match `\d` but `date.fromisoformat` rejects them, so they also give 422; no change.
+- TestClient: API week=20260720 / 2026-W30-1 / 2026-07-20T00:00:00 -> 422 with message.
+
+### T-10 · attempt 1 · human-command · AWAITING
+`docker compose up -d --build app` (Done-when 4 curls the running server).
+
+### T-10 · attempt 1 · human-command · PASS
+Engineer ran `docker compose up -d --build app`; reported "app is up".
+Agent check 4 against the running server: `/?account_id=6&week=20260720` -> 422; `week=2026-W30-1` -> 422; `week=2026-07-20` -> 200.
+
+### T-10 · attempt 1 · validator · PASS
+PASS for T-10.
+
+1. Met. `uv run pytest tests/integration/test_page.py tests/integration/test_api.py -q` gives 35 passed. The diff adds `20260720` and `2026-W30-1` to the page error parametrization, which expects 422 and a message. I curled the live page with `2026-W30-1`: it returns 422 with `role="alert"` and the text "week '2026-W30-1' is not a valid date (YYYY-MM-DD)". The existing API malformed cases (`20260720`, `2026-07-20T00:00:00`, `2026-13-01`, `last-week`) each return 422 live on `/api/accounts/6/weekly-report`. `week=2026-07-20` returns 200 there.
+2. Met. `grep -c fromisoformat app/main.py` prints 1. The diff removes the API route's `Query(pattern=...)` and puts a single `WEEK_PATTERN.fullmatch` check inside `parse_week`, which both routes use.
+3. Met. Each command exited 0 with this result:
+   - `uv run pytest -q`: 58 passed.
+   - `uv run ruff check .`: all checks passed.
+   - `uv run ruff format --check .`: 37 files already formatted.
+   - `uv run mypy app`: no issues in 8 source files.
+   - `uv run mypy app tests`: no issues in 13 source files.
+4. Met. I ran the curls against the running server. `/?account_id=6&week=20260720` prints 422, `week=2026-W30-1` prints 422, and `week=2026-07-20` prints 200.
+
+Scope: the changes are limited to `app/main.py`, `tests/integration/test_page.py` and `tests/integration/test_api.py`. The `test_api.py` change annotates a local to satisfy mypy. The `main.py` diff also drops the now-unused `Annotated` and `Query` imports.
+
+The tests are real integration tests with no mocked DB, and the new cases would fail on the old page behavior.
+
+No hand-verified figure belongs to this task.

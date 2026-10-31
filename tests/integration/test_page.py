@@ -79,6 +79,8 @@ def test_page_renders_state_from_url_and_matches_json(client: TestClient) -> Non
         ({"account_id": 6, "week": "2026-01-26"}, 422),
         ({"account_id": 6, "week": "2026-07-27"}, 422),
         ({"account_id": 6, "week": "not-a-date"}, 422),
+        ({"account_id": 6, "week": "20260720"}, 422),  # basic ISO form, not YYYY-MM-DD
+        ({"account_id": 6, "week": "2026-W30-1"}, 422),  # ISO week date, not YYYY-MM-DD
     ],
 )
 def test_page_errors_render_a_message_with_the_matching_status(

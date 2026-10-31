@@ -70,8 +70,9 @@ the data supports.
 - rows outside the expected range first, and one line at the top: "N of M locations outside
   expected range; K not judged".
 
-**Assumptions** (full list with reasoning in `PLAN.md` §2; none were emailed to the recruiter, so
-they are documented there with the working assumption used):
+**Assumptions** (full list with reasoning in `PLAN.md` §2; none were emailed to the recruiter, because I
+didn't want to block on a reply inside the time budget, so each is documented there with the
+working assumption used):
 
 - **"This week" is not `now()`.** The seed is a static snapshot ending 2026-07-27, so the default
   is the last complete local week before the latest event in the whole dataset (2026-07-20). The
