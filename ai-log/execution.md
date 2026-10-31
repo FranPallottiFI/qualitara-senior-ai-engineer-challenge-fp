@@ -97,3 +97,48 @@ Evidence per criterion:
 7. I ran the §9 SQL independently through `sql-ro.sh`. It returned 42, matching the test.
 
 PENDING HUMAN: hand-verify the figure 42 (account 1, week 2026-07-06) by re-running the PLAN §9 SQL by hand: SELECT count(*) FROM (SELECT DISTINCT location, event_type, occurred_at, duration_seconds, outcome FROM activity_events WHERE account_id=1 AND occurred_at >= ('2026-07-06'::timestamp AT TIME ZONE 'America/Chicago') AT TIME ZONE 'UTC' AND occurred_at < ('2026-07-13'::timestamp AT TIME ZONE 'America/Chicago') AT TIME ZONE 'UTC') x;
+
+### T-04 · human-command · PASS (PENDING HUMAN resolved)
+Engineer re-ran the PLAN §9 SQL by hand in psql -> `42`.
+Engineer also ran two counterfactuals:
+- same window, no DISTINCT -> `43` (dedup removes the 11266/11267 pair);
+- DISTINCT but UTC week bounds ('2026-07-06'..'2026-07-13' unconverted) -> `43` (event 11094 moves in).
+
+### T-05 · start · risk:high
+
+### T-05 · attempt 1 · self-check (pre-validator notes)
+- `uv run pytest tests/domain -q` -> 15 passed; full suite 23 passed; ruff check/format clean; mypy Success (7 files); purity grep -> no output.
+- Extra: poisson_range matches all 11 rows of docs/analysis/03 output (2:0..6 4:0..10 5:0..12 6:1..13 8:2..16 10:3..19 15:6..26 20:10..32 30:17..45 50:33..69 70:49..92); lam=72.5 -> 52..95 (= PLAN §8 account 6 total range).
+
+### T-05 · attempt 1 · validator · PASS
+T-05 verdict: PASS. Every Done-when item has execution evidence.
+
+Done when 1:
+- `uv run pytest tests/domain -q` passes: 15 passed.
+- All six named tests are present in `/tests/domain/test_baseline.py` (full path: C:\Users\Windows\Desktop\FDE Challenge\qualitara-senior-ai-engineer-challenge-fp\tests\domain\test_baseline.py).
+- `test_poisson_range_matches_reference_table` asserts 4→0..10, 8→2..16, 15→6..26, 30→17..45, 70→49..92. I ran `./scripts/sql-ro.sh "$(cat docs/analysis/03-min-detectable-change.sql)"`. Its `normal_range` column shows the same five ranges.
+- `test_verdict_boundaries` at λ=30 asserts 16 low, 17 within, 45 within, 46 high.
+- `test_low_impossible_at_small_baseline_gives_too_little_volume` asserts that 0, 4 and 10 at λ=4 give `too_little_volume`, and that 11 gives `high`.
+- `test_zero_baseline_gives_too_little_volume_never_high` asserts that count 500 at λ=0 gives `too_little_volume`, not `high`.
+- `test_fewer_than_8_baseline_weeks_gives_not_enough_history` is parametrized over 0, 1 and 7 weeks of history.
+- `test_single_extreme_week_does_not_move_the_baseline` asserts a median of 13 with an 800 outlier in the weeks.
+
+Done when 2: the purity grep over `app/domain/` returned nothing (exit 1). `baseline.py` imports only `math`, `statistics`, `collections.abc` and `typing`.
+
+Done when 3: `ruff check .` exits 0, `ruff format --check .` exits 0 (31 files already formatted), and `mypy app` exits 0 (no issues in 7 source files).
+
+PLAN §4 verdict table: `verdict()` applies the rows in order, and each row matches PLAN.
+1. `not_enough_history` when weeks of history are under 8.
+2. `too_little_volume` when λ=0.
+3. `high` when count is above the upper bound.
+4. `low` when count is below the lower bound.
+5. `too_little_volume` when the lower bound is 0.
+6. Otherwise `within_expected_range`.
+
+`poisson_range` uses `math.lgamma`, returns (0, 0) for λ=0 before any `log` call, and uses no scipy.
+
+Scope: the changed files are only `/app/domain/__init__.py`, `/app/domain/baseline.py` and `/tests/domain/test_baseline.py`. The other changes in the tree are process logs and the `.env.example` leftover. I found no unscoped change.
+
+Tests: none mock the DB, and the assertions would fail on wrong code. The domain code is pure, so `.claude/rules/tests.md` has no mocked-DB issue to flag.
+
+No PENDING HUMAN item for this task.

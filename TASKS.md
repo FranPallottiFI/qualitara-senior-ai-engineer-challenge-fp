@@ -134,7 +134,7 @@ deps: [T-03]
 
 ---
 
-### [ ] T-05 · risk:high · Domain: baseline, Poisson range, verdicts
+### [x] T-05 · risk:high · Domain: baseline, Poisson range, verdicts
 deps: [T-01]
 
 **Scope** (PLAN §4 Definitions and Verdicts, §6 "No scipy"):
