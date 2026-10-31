@@ -151,6 +151,24 @@ Build (from `execution.md`):
 - **The hand-verified number.** Fran re-ran the §9 SQL by hand (42), plus the agent's two
   counterfactual queries from PLAN §9: without `DISTINCT` the count is 43, and with `DISTINCT` but
   UTC week bounds it is also 43. The counterfactual figures were the agent's; Fran re-ran them.
+- **A misleading headline, caught by hand (T-11).** After T-10, Fran tested the page by hand and
+  found that for account 6, week 2026-07-13, the account total read "Below expected range" (50
+  against 52–95) while the count line said "0 of 15 locations outside expected range", so a Monday
+  reader would conclude all is well. Neither the agent, the validator (T-07) nor the final reviewer
+  (T-09) had flagged it: every test checked that the count line matched the rows, none that it
+  matched the account total. Fran specified the fix: the line now leads with a flagged account
+  total ("Account total below expected range this week. 0 of 15 locations outside expected range
+  (last 4 weeks)").
+- **A misleading column layout, caught by hand (T-11 extension).** In the same hand test Fran found
+  that the single-week count sat next to the 4-week range, so readers compared them: account 6,
+  Site A showed "This week 9" beside "Range 12 to 38" and read as below range, though the range
+  applies to the 4-week count (22) and 9 is above Site A's typical week (about 6). The agent had
+  placed the columns that way in T-07, despite PLAN Q12's own warning that a range shown near an
+  unjudged count invites the reader to judge it. Fran specified the fix: the judged 4-week columns
+  first, "Expected" renamed "Typical", and "This week (not judged)" last and visually separated.
+  Fran then added a "Typical week" (the location's 8-week median) beside the single-week count,
+  partly reversing Q12 / Cut 2, which the agent had argued for: the typical value gives context
+  without a verdict. Recorded in `PLAN.md`, "Changes after approval".
 - **Early claims verified by hand.** After the first survey Fran checked two of the agent's claims
   (12 duplicate groups; "Site A" used by 19 accounts) and reported both held.
 

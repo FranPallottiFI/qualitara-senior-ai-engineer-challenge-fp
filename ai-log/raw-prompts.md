@@ -1050,3 +1050,76 @@ app is up
   No hand-verified figure belongs to this task.
 </agent-message>
 ```
+
+### 2026-10-31T19:16:34-03:00 · session `bd61c2c8`
+
+```text
+
+
+<pasted_content id="33b4">
+I found a misleading headline while testing the page by hand: account 6 (Metro Collision
+Centers), week 2026-07-13. The account total is "Below expected range" (50 vs 52-95), but the
+count line says "0 of 15 locations outside expected range", so a Monday reader concludes all is
+well.
+
+Add T-11 (risk:low, page wording only, no contract or method change): the count line must lead
+with the account-total verdict whenever it is high or low, e.g. "Account total below expected
+range this week. 0 of 15 locations outside expected range (last 4 weeks)". When the account
+total is within range or not judged, keep the current line. Single-location accounts are
+unchanged. Add a page test for account 6, week 2026-07-13 that asserts the headline mentions the
+account-total verdict. Log in the reflection that I caught this while testing the page by hand.
+</pasted_content id="33b4">
+
+```
+
+### 2026-10-31T19:19:22-03:00 · session `bd61c2c8`
+
+```text
+app is up
+```
+
+### 2026-10-31T19:22:51-03:00 · session `bd61c2c8`
+
+```text
+
+
+<pasted_content id="33b4">
+Hand testing found a second layout problem in the location table: the single-week count sits
+next to the 4-week range, so readers compare them. Example: account 6, Site A shows "This week 9"
+beside "Range 12 to 38" and reads as below range, when the range applies to the 4-week count (22)
+and 9 is above Site A's typical week (about 6).
+
+Extend T-11 (page wording and layout only, no contract or method change):
+- Column order: Location | Last 4 weeks | Typical (4 weeks) | Range (4 weeks) | Verdict (4 weeks) |
+  This week (not judged).
+- Rename "Expected" to "Typical" in both tables.
+- Visually separate the "This week (not judged)" column from the judged columns.
+- Add a page test asserting the column order and that "This week" is the last column.
+Log in the reflection that I caught this while testing the page by hand.
+</pasted_content id="33b4">
+
+```
+
+### 2026-10-31T19:25:46-03:00 · session `bd61c2c8`
+
+```text
+
+
+<pasted_content id="33b4">
+Hand testing again: a single-week count with no comparison is hard to read, and a single-week
+verdict per location isn't supported by the data (about 2% of halvings caught, docs/analysis/04b).
+Add to T-11: next to "This week (not judged)", show "Typical week" = the location's 8-week median
+baseline, no range and no verdict. Example: Site A, this week 9, typical week 6. Record it in
+PLAN.md's "Changes after approval" as a post-approval change, with this reason, partly reversing
+Q12/Cut 2: the typical value gives context without a verdict. Add the column to the page test.
+</pasted_content id="33b4">
+
+```
+
+### 2026-10-31T19:30:30-03:00 · session `bd61c2c8`
+
+```text
+app is upAdd one line above the locations table (page text only): "Left: the last 4 weeks, judged against
+this location's typical 4 weeks. Right: this week's count next to a typical week, shown for
+context, not judged; single weeks are too small to judge per location." Include it in T-11.
+```

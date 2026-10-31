@@ -10,7 +10,9 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 
-COUNT_LINE = re.compile(r"(\d+) of (\d+) locations outside expected range(?:; (\d+) not judged)?")
+COUNT_LINE = re.compile(
+    r"(\d+) of (\d+) locations outside expected range(?: \(last 4 weeks\))?(?:; (\d+) not judged)?"
+)
 
 
 @pytest.fixture(scope="module")
@@ -98,3 +100,66 @@ def test_week_selector_is_bounded_by_the_data(client: TestClient) -> None:
     assert weeks[-1] == "2026-02-02"
     assert len(weeks) == 25
     assert '<option value="2026-07-20" selected>' in html
+
+
+def _count_line_text(html: str) -> str:
+    match = re.search(r'<p id="count-line"><strong>(.*?)</strong></p>', html, re.S)
+    assert match, "count line not found"
+    return match[1]
+
+
+def test_flagged_account_total_leads_the_count_line(client: TestClient) -> None:
+    # Account 6, week 2026-07-13: total 50 against 52..95 (low) while no location window is
+    # flagged. The headline must not read as "all is well".
+    body = client.get("/api/accounts/6/weekly-report", params={"week": "2026-07-13"}).json()
+    assert body["total"]["verdict"] == "low"
+    html = client.get("/", params={"account_id": 6, "week": "2026-07-13"}).text
+    line = _count_line_text(html)
+    assert line.startswith("Account total below expected range this week.")
+    assert "0 of 15 locations outside expected range (last 4 weeks)" in line
+    assert _count_line(html) == _expected_counts(body)
+
+    # Total within range, and a single-location account: the line is unchanged.
+    within = client.get("/", params={"account_id": 6, "week": "2026-07-20"}).text
+    assert "Account total" not in _count_line_text(within)
+    single = client.get("/", params={"account_id": 16}).text
+    assert "Account total" not in _count_line_text(single)
+
+
+def test_location_table_keeps_the_unjudged_week_apart_from_the_4_week_columns(
+    client: TestClient,
+) -> None:
+    # The single-week count must not sit next to the 4-week range (account 6 Site A: 9 beside
+    # 12 to 38 reads as "below range", but the range applies to the 4-week count, 22).
+    html = client.get("/", params={"account_id": 6, "week": "2026-07-20"}).text
+    # The legend above the table says which side is judged.
+    legend = re.search(
+        r'<p class="note" id="locations-legend">(.*?)</p>\s*<table id="locations">', html, re.S
+    )
+    assert legend
+    assert legend[1].startswith("Left: the last 4 weeks, judged against this location's typical")
+    assert "not judged; single weeks are too small to judge per location." in legend[1]
+    table = re.search(r'<table id="locations">(.*?)</table>', html, re.S)
+    assert table
+    headers = [
+        re.sub(r"<[^>]+>", "", h).strip() for h in re.findall(r"<th[^>]*>.*?</th>", table[1])
+    ]
+    assert headers == [
+        "Location",
+        "Last 4 weeks",
+        "Typical (4 weeks)",
+        "Range (4 weeks)",
+        "Verdict (4 weeks)",
+        "This week (not judged)",
+        "Typical week",
+    ]
+    row = re.search(r'<tr data-location="Site A"[^>]*>(.*?)</tr>', table[1], re.S)
+    assert row
+    cells = [
+        re.sub(r"<[^>]+>", "", c).strip() for c in re.findall(r"<td[^>]*>.*?</td>", row[1], re.S)
+    ]
+    assert cells[1] == "22"
+    assert cells[3] == "12 to 38"
+    # This week 9 beside its typical week, 6 (the 8-week median; expected 24 = 4 x 6).
+    assert cells[-2] == "9"
+    assert cells[-1] == "6.0"

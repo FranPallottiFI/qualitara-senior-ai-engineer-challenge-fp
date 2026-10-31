@@ -467,4 +467,13 @@ the engineer to run uv commands or to expose uv to that shell).
 
 ## Changes after approval
 
-None.
+- **2026-10-31, T-11 (engineer, after testing the page by hand): show a "Typical week" next to the
+  single-week location count. Partly reverses Q12 / Cut 2.**
+  - **What:** each location row shows "This week (not judged)" and, beside it, "Typical week" =
+    the location's 8-week median baseline (the same median behind the 4-week expected value, so
+    `expected / 4`). No range and no verdict for the single week.
+  - **Why:** a single-week count with no comparison is hard to read, and a single-week verdict
+    per location isn't supported by the data (about 2% of halvings caught, `docs/analysis/04b`).
+    The typical value gives context without a verdict.
+  - **Unchanged:** the JSON contract, the method, and the rule that single-week location counts
+    get no range or verdict.

@@ -112,7 +112,9 @@ working assumption used):
   weeks" next to it.
 - **No range or verdict on the single-week location count.** At a baseline of about 6 the range
   is 1..13, nearly uninformative, and a range without a verdict invites the admin to judge it
-  themselves. The count alone is what the dashboard shows today.
+  themselves. Instead the page shows "This week (not judged)" beside a "Typical week" (the
+  location's 8-week median), set apart from the judged 4-week columns: context without a verdict.
+  This was a post-approval change after hand testing (`PLAN.md`, "Changes after approval").
 - **Verdicts are explicit about what they cannot say:** `not_enough_history` (fewer than 8
   baseline weeks), `too_little_volume` (a zero baseline, or a lower bound of 0 so a drop can't be
   detected), `high`, `low`, `within_expected_range`. A zero baseline is never `high`.

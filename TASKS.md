@@ -313,3 +313,67 @@ coerce silently"; README: "Invalid input is rejected, never coerced").
    prints `422`, and the same for `week=2026-W30-1`; `week=2026-07-20` prints `200`.
 
 **Out of scope:** any other validation change.
+
+---
+
+### [~] T-11 · risk:low · Count line leads with a flagged account total
+deps: [T-10]
+> awaiting: docker compose up -d --build app
+
+**Origin:** found by the engineer testing the page by hand. Account 6, week 2026-07-13: the
+account total is "Below expected range" (50 vs 52–95), but the count line reads "0 of 15 locations
+outside expected range", so a Monday reader concludes all is well.
+
+**Scope** (PLAN §1 slice, §8 Count line; page wording only, no contract or method change):
+- `app/templates/report.html`: when `total` is `high` or `low`, the count line leads with it, e.g.
+  "Account total below expected range this week. 0 of 15 locations outside expected range (last 4
+  weeks)". When the total is within range, not judged, or absent (single-location accounts), the
+  current line is unchanged.
+- `tests/integration/test_page.py`: account 6, week 2026-07-13 asserts the headline mentions the
+  account-total verdict; the existing count-line checks keep passing.
+- `ai-log/03-reflection.md`: record that the engineer caught this by hand.
+
+**Done when**
+1. `uv run pytest tests/integration/test_page.py -q` passes, including a test asserting that
+   `/?account_id=6&week=2026-07-13` has a count line containing "Account total below expected
+   range", and that `/?account_id=6&week=2026-07-20` (total within range) and account 16 (single
+   location) do not contain "Account total".
+2. `git diff --stat` shows no change under `app/` except `app/templates/report.html`, and JSON for
+   account 6 / 2026-07-13 is unchanged (API tests pass).
+3. `uv run pytest -q`, `uv run ruff check .`, `uv run ruff format --check .` and `uv run mypy app`
+   exit 0; `grep -c "<script" app/templates/report.html` returns 0.
+4. Against the running server after `docker compose up -d --build app` (human):
+   `curl -s "http://localhost:8000/?account_id=6&week=2026-07-13"` contains "Account total below
+   expected range".
+
+**Out of scope:** any change to verdicts, ranges, sorting or the JSON contract.
+
+**Extension (engineer, after hand testing; same task, page layout and wording only):** the
+single-week count sat next to the 4-week range, so readers compared them (account 6, Site A: "This
+week 9" beside "Range 12 to 38" reads as below range, though the range applies to the 4-week count
+22, and 9 is above Site A's typical week of about 6).
+- Location table column order: Location | Last 4 weeks | Typical (4 weeks) | Range (4 weeks) |
+  Verdict (4 weeks) | This week (not judged).
+- "Expected" renamed "Typical" in both tables.
+- The "This week (not judged)" column is visually separated from the judged columns.
+- Reflection: record that the engineer caught this by hand.
+
+**Done when (extension)**
+5. `uv run pytest tests/integration/test_page.py -q` passes, including a test asserting the
+   location table headers are exactly that order with "This week (not judged)" last, and that
+   account 6 / 2026-07-20 Site A's row has 22 in "Last 4 weeks" and 9 in the last column.
+6. `grep -c "Expected" app/templates/report.html` returns 0.
+7. Checks 2–3 still hold; against the running server after a rebuild (human),
+   `curl -s "http://localhost:8000/?account_id=6&week=2026-07-20"` shows "This week (not judged)"
+   as the last location header.
+
+**Extension 2 (engineer, after hand testing):** beside "This week (not judged)", show "Typical
+week" = the location's 8-week median baseline (`expected / 4`), no range and no verdict. Recorded
+in PLAN.md "Changes after approval" (partly reverses Q12 / Cut 2). Done-when 5's header order now
+ends "This week (not judged) | Typical week"; Site A at 2026-07-20 shows 9 and 6.0 in the last two
+columns. Done-when 7's live check becomes: "Typical week" is the last location header.
+
+**Extension 3 (engineer):** one line above the locations table (page text only): "Left: the last 4
+weeks, judged against this location's typical 4 weeks. Right: this week's count next to a typical
+week, shown for context, not judged; single weeks are too small to judge per location." Asserted in
+the layout test; live check: the line is present on the rebuilt server.

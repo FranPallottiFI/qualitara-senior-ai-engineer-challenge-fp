@@ -22,6 +22,9 @@
   tr.flagged td { background: #fff4e5; font-weight: 600; }
   .error { border: 1px solid #c33; background: #fdecec; padding: 0.75rem 1rem; }
   .note { color: #555; font-size: 0.9rem; }
+  /* The single-week count is not judged: set it apart so it isn't read against the 4-week range. */
+  .unjudged { border-left: 3px solid #bbb; color: #666; font-style: italic; }
+  .unjudged-next { color: #666; font-style: italic; }
 </style>
 </head>
 <body>
@@ -57,12 +60,14 @@
 {% else %}
 {%- set flagged = report.locations | selectattr("window.verdict", "in", ["high", "low"]) | list | length -%}
 {%- set not_judged = report.locations | selectattr("window.verdict", "in", ["not_enough_history", "too_little_volume"]) | list | length -%}
-<p id="count-line"><strong>{{ flagged }} of {{ report.locations | length }} locations outside expected range{% if not_judged %}; {{ not_judged }} not judged{% endif %}</strong></p>
+{#- A flagged account total leads the line, so the headline can't read "all is well" while the total is outside its range. -#}
+{%- set total_flagged = report.total and report.total.verdict in ["high", "low"] -%}
+<p id="count-line"><strong>{% if total_flagged %}Account total {{ "above" if report.total.verdict == "high" else "below" }} expected range this week. {% endif %}{{ flagged }} of {{ report.locations | length }} locations outside expected range{% if total_flagged %} (last 4 weeks){% endif %}{% if not_judged %}; {{ not_judged }} not judged{% endif %}</strong></p>
 
 {% if report.total %}
 <h3>Account total (this week)</h3>
 <table id="total">
-  <thead><tr><th>Events</th><th>Expected</th><th>Range</th><th>Verdict</th></tr></thead>
+  <thead><tr><th>Events</th><th>Typical</th><th>Range</th><th>Verdict</th></tr></thead>
   <tbody>
     <tr data-verdict="{{ report.total.verdict }}">
       <td>{{ report.total.count }}</td>
@@ -75,26 +80,30 @@
 {% endif %}
 
 <h3>Locations</h3>
+<p class="note" id="locations-legend">Left: the last 4 weeks, judged against this location's typical 4 weeks. Right: this week's count next to a typical week, shown for context, not judged; single weeks are too small to judge per location.</p>
 <table id="locations">
   <thead>
     <tr>
       <th>Location</th>
-      <th>This week</th>
       <th>Last 4 weeks</th>
-      <th>Expected (last 4 weeks)</th>
-      <th>Range (last 4 weeks)</th>
-      <th>Verdict (last 4 weeks)</th>
+      <th>Typical (4 weeks)</th>
+      <th>Range (4 weeks)</th>
+      <th>Verdict (4 weeks)</th>
+      <th class="unjudged">This week (not judged)</th>
+      <th class="unjudged-next">Typical week</th>
     </tr>
   </thead>
   <tbody>
     {%- for row in report.locations %}
     <tr data-location="{{ row.location }}" data-verdict="{{ row.window.verdict }}"{% if row.window.verdict in ["high", "low"] %} class="flagged"{% endif %}>
       <td>{{ row.location }}</td>
-      <td>{{ row.week_count }}</td>
       <td>{{ row.window.count }}</td>
       <td>{% if row.window.expected is not none %}{{ row.window.expected }}{% else %}-{% endif %}</td>
       <td>{% if row.window.range %}{{ row.window.range.low }} to {{ row.window.range.high }}{% else %}-{% endif %}</td>
       <td>{{ labels[row.window.verdict] }} (last 4 weeks)</td>
+      <td class="unjudged">{{ row.week_count }}</td>
+      {#- Typical week = the 8-week median baseline; the 4-week expected value is 4 x that median (PLAN §4). -#}
+      <td class="unjudged-next">{% if row.window.expected is not none %}{{ row.window.expected / 4 }}{% else %}-{% endif %}</td>
     </tr>
     {%- endfor %}
   </tbody>

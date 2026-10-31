@@ -414,3 +414,60 @@ Scope: the changes are limited to `app/main.py`, `tests/integration/test_page.py
 The tests are real integration tests with no mocked DB, and the new cases would fail on the old page behavior.
 
 No hand-verified figure belongs to this task.
+
+### T-11 · start · risk:low
+Added to TASKS.md at the engineer's request (found by hand testing the page: account 6, week 2026-07-13, total low but count line "0 of 15").
+
+### T-11 · attempt 1 · self-check (Done-when 1-3)
+- app/templates/report.html: count line leads with "Account total above|below expected range this week." and appends "(last 4 weeks)" to the location part only when `total.verdict` is high/low; otherwise unchanged.
+- tests/integration/test_page.py: COUNT_LINE regex accepts the optional " (last 4 weeks)"; new `test_flagged_account_total_leads_the_count_line` (account 6 / 2026-07-13 starts with "Account total below expected range this week." and contains "0 of 15 locations outside expected range (last 4 weeks)", N/M/K equal JSON; 2026-07-20 and account 16 contain no "Account total").
+1. `uv run pytest tests/integration/test_page.py -q` -> 10 passed.
+2. `git diff --stat`: under app/ only app/templates/report.html changed; API tests pass (JSON unchanged).
+3. `uv run pytest -q` -> 59 passed; ruff check clean; ruff format --check 37 files already formatted; mypy app Success; `grep -c "<script" app/templates/report.html` -> 0.
+Extra (TestClient): 06-01 and 06-08 -> "Account total above expected range this week. 15 of 15 locations outside expected range (last 4 weeks)"; 03-23 (total not judged) -> "0 of 15 locations outside expected range; 15 not judged"; account 16 -> "0 of 1 locations outside expected range".
+- Reflection §6: entry recording that Fran caught this by hand, and that no earlier test, validator or reviewer pass compared the count line with the account total.
+
+### T-11 · attempt 1 · human-command · AWAITING
+`docker compose up -d --build app` (Done-when 4).
+
+### T-11 · attempt 1 · human-command · PASS
+Engineer ran `docker compose up -d --build app`; reported "app is up".
+
+### T-11 · attempt 1 · self-check · PASS
+4. `curl -s "http://localhost:8000/?account_id=6&week=2026-07-13"` -> `<p id="count-line"><strong>Account total below expected range this week. 0 of 15 locations outside expected range (last 4 weeks)</strong></p>`.
+   Control: week 2026-07-20 -> `<p id="count-line"><strong>0 of 15 locations outside expected range</strong></p>` (unchanged).
+Done-when 1-3 evidence above. All four met.
+
+### T-11 · reopened · extension
+Engineer extended T-11 after hand testing: single-week count next to the 4-week range invites a wrong comparison (account 6 Site A: 9 beside 12..38). Column reorder, "Expected" -> "Typical", separated "This week (not judged)" column, header-order test.
+
+### T-11 · attempt 2 (extension) · self-check (Done-when 5-6, 2-3)
+- report.html: location columns now Location | Last 4 weeks | Typical (4 weeks) | Range (4 weeks) | Verdict (4 weeks) | This week (not judged); last column has class `unjudged` (left border, grey italic); total table "Expected" -> "Typical".
+- New `test_location_table_keeps_the_unjudged_week_apart_from_the_4_week_columns`: exact header order; account 6 / 2026-07-20 Site A cells: Last 4 weeks 22, Range "12 to 38", last column 9.
+5. `uv run pytest tests/integration/test_page.py -q` -> 11 passed.
+6. `grep -c "Expected" app/templates/report.html` -> 0.
+2-3. under app/ only report.html changed; `uv run pytest -q` -> 60 passed; ruff check clean; format 37 files; mypy app Success; `grep -c "<script"` -> 0.
+- Reflection §6: entry recording that Fran caught the layout by hand, and that the agent's T-07 layout went against PLAN Q12's own reasoning.
+
+### T-11 · attempt 2 · human-command · AWAITING
+`docker compose up -d --build app` (Done-when 7).
+
+### T-11 · extension 2 · self-check
+- Engineer added "Typical week" (8-week median, no range/verdict) beside "This week (not judged)", partly reversing Q12 / Cut 2; engineer asked for the PLAN.md "Changes after approval" entry (agent edited the frozen PLAN.md on that explicit instruction; settings require confirmation for PLAN.md edits).
+- report.html: new last column `Typical week` = `row.window.expected / 4` ("-" when not_enough_history); class `unjudged-next`. No contract or method change.
+- test_page.py header test now expects "... | This week (not judged) | Typical week"; Site A 2026-07-20 last two cells "9", "6.0".
+- README "No range or verdict on the single-week location count" bullet updated to describe the typical week and point at PLAN "Changes after approval" (would otherwise be stale).
+- Reflection §6 T-11 layout entry extended.
+- `uv run pytest tests/integration/test_page.py -q` -> 11 passed; full suite 60 passed; ruff check clean; format 37 files; mypy app Success; `grep -c Expected` -> 0; `grep -c "<script"` -> 0.
+- Site A rows: 2026-07-20 -> [Site A, 22, 24.0, 12 to 38, Within..., 9, 6.0]; 2026-04-13 (not enough history) -> typical week "-".
+
+### T-11 · extension 2 · live check (Done-when 7 as amended)
+After the engineer's rebuild: `curl -s "http://localhost:8000/?account_id=6&week=2026-07-20"` last location headers -> `Verdict (4 weeks)`, `This week (not judged)` (class unjudged), `Typical week` (class unjudged-next). Met.
+
+### T-11 · extension 3 · self-check
+- Engineer asked for one legend line above the locations table (text verbatim from the request), `<p class="note" id="locations-legend">` immediately before `<table id="locations">`.
+- Layout test asserts the legend precedes the table, starts "Left: the last 4 weeks, judged against this location's typical" and contains "not judged; single weeks are too small to judge per location."
+- `uv run pytest tests/integration/test_page.py -q` -> 11 passed; full suite 60 passed; ruff check clean; format 37 files; mypy app Success; `grep -c "<script"` -> 0.
+
+### T-11 · attempt 2 · human-command · AWAITING
+`docker compose up -d --build app` (live check of the legend line).
