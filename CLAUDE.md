@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Project: **<TICKET-ID> — <one-line feature>** (take-home challenge, see
+Project: **DASH-247 — weekly location activity report — <one-line feature>** (take-home challenge, see
 [docs/CHALLENGE.md](docs/CHALLENGE.md)).
 
 ## Read first, in this order

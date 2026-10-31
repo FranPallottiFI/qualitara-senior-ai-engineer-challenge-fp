@@ -18,6 +18,8 @@ database is empty, and starts the server. Nothing else needs to be installed exc
   Postgres URL; compose sets it for the container) and `DB_PORT` (host port for Postgres,
   default 5432).
 - Ports are bound to `127.0.0.1` only.
+- Troubleshooting: behind a TLS-intercepting proxy, `uv` may need `--system-certs` (for example
+  `uv sync --frozen --system-certs`) to download packages.
 
 ## Run tests
 
@@ -131,7 +133,7 @@ they are documented there with the working assumption used):
   malformed date gives a 422 with a message; an unknown account gives a 404; an account with no
   events gives a well-formed empty 200.
 
-**Build-time choices made by the agent, not individually reviewed by me** [Fran to confirm]:
+**Build-time choices made by the agent and reviewed by me:**
 strict `YYYY-MM-DD` week parsing (a lax parser would accept timestamps), the page's HTML layout
 and verdict wording, the account/week selector queries, and `pythonpath = ["."]` in the pytest
 config.
@@ -181,7 +183,9 @@ seeded Postgres, with no mocks.
   monthly at small accounts, so they need their own method.
 - **Dispersion-aware ranges,** once real variance/mean is measured (see above).
 - **Surfacing the deduplication** in the page or API instead of only in this README.
-- **A second clean-machine run** and more edge-case tests with the spare time.
+- **A cold-cache clean-machine run.** The fresh-clone run so far used a warm Docker cache (about
+  26 s to the first page), so image pulls and `uv sync` inside the container are not yet timed.
+  More edge-case tests with any spare time.
 - **An LLM summary panel: designed, not built.** A summary adds fluency, not information, on this
   data: sorting flagged rows first plus the count line already answers "at a glance". The design
   in `PLAN.md` §10 gives the model only the computed `WeeklyReport`, forbids it to compute
@@ -195,18 +199,21 @@ seeded Postgres, with no mocks.
 
 - **Before the clock.** The agent harness (the `CLAUDE.md` rules, the `task-loop` skill, the
   `validator` and `reviewer` subagents, and the permission settings in `.claude/`) was adapted
-  from a colleague's recommendation given in a conference, which I studied beforehand to improve my own harness. That study
-  happened before the first logged prompt (2026-10-31 14:23).
-- **Tools and models.** Claude Code with Opus for planning, reviews and T-03–T-06; Sonnet for
-  routine tasks and the validator. A separate Claude chat served as a planning advisor to weigh
-  options and review the harness; every decision was mine. [Fran to confirm: exact model
-  versions]
+  from a colleague's prior submission of this challenge, which I studied beforehand, with the help
+  of the advisor chat (see `ai-log/00-advisor-chat.md`). That study happened before the first
+  logged prompt (2026-10-31 14:23).
+- **Tools and models.** Claude Code with Opus 5.5 for planning, reviews and T-03–T-06; Sonnet 5.5
+  for routine tasks and the validator. A separate advisor chat on claude.ai (same models) helped me
+  weigh options, review the harness and draft many of the structured prompts; every decision was
+  mine. It is summarized in `ai-log/00-advisor-chat.md`.
 - **Division of labor.** The agent surveyed the data, ran the analysis SQL, drafted `PLAN.md`
   and implemented the tasks in `TASKS.md` one at a time. I made the decisions listed in
   `ai-log/raw-prompts.md`, ran every machine-changing command myself (`uv lock`, `docker compose`)
   and committed. A `reviewer` subagent reviewed the plan before any code; a `validator` subagent
   with fresh context judged each high-risk task, and its verdicts are in `ai-log/execution.md`.
-- **The log.** `ai-log/` holds the raw prompts (written by a hook, not edited), the survey
-  output, the planning notes, the per-task execution log with every verdict, and
-  `ai-log/03-reflection.md`: specific moments where the AI was wrong or I overrode it.
-- **Time.** The plan budgeted about 2.6 h of analysis and planning plus a 3 h build. 
+- **The log.** `ai-log/` holds the advisor-chat summary (`00-advisor-chat.md`), the raw prompts
+  (written by a hook, not edited), the survey output, the planning notes, the per-task execution
+  log with every verdict, and `ai-log/03-reflection.md`: specific moments where the AI was wrong
+  or I overrode it.
+- **Time.** About 2.6 h of analysis and planning (plan approved ~17:00), then the build.
+  Actual total: 5 hs

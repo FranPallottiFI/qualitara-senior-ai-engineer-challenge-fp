@@ -1,0 +1,2 @@
+# Disclaimer
+I used a separate Claude chat as a planning advisor: to question my own opinions against another criteria, reviewing the harness, and drafting many of the prompts I sent to Claude Code in an optimal way, not exactly my own wording but optimised. Decisions were mine; see 00-advisor-chat.md

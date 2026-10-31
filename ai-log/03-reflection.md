@@ -1,48 +1,70 @@
 # 03 · Reflection: specific moments where the AI was wrong or I overrode it
 
-**DRAFT written by the agent (Claude Code, Sonnet 5.5) from `raw-prompts.md`,
-`02-planning-notes.md` and `execution.md`. Fran reviews it before submission.** Quotes of Fran are
-verbatim from `raw-prompts.md`. Anything I could not source to a prompt, a log entry or a commit
-is marked **[Fran to confirm]**. I have not attributed reasoning to Fran beyond what the
-prompts say.
+Drafted by the agent, reviewed and corrected by me (Fran). Sources: `raw-prompts.md`,
+`00-advisor-chat.md`, `02-planning-notes.md` and `execution.md`. Quotes of Fran are verbatim from
+`raw-prompts.md`. Two reasons Fran has not yet supplied are marked **[Fran to confirm]**.
 
 ## Tools and models (one honest line)
 
-Claude Code with Opus for planning, reviews and T-03–T-06; Sonnet for routine tasks (T-01, T-02,
-T-07, this draft) and the validator; a separate Claude chat used as a planning advisor to weigh
-options and review the harness, with every decision Fran's. The chat is not in `raw-prompts.md`,
-which only records prompts submitted in Claude Code. [Fran to confirm: exact model versions, and
-whether the advisor chat transcript should be added to `ai-log/`]
+Claude Code with Opus 5.5 for planning, reviews and T-03–T-06, and Sonnet 5.5 for routine tasks
+(T-01, T-02, T-07, drafting this file) and the validator; a separate advisor chat on claude.ai
+(same models) to weigh options, review the harness and draft many of the structured prompts, with
+every decision Fran's. The advisor chat is summarized in `00-advisor-chat.md`; it is not in
+`raw-prompts.md`, which only records prompts typed into Claude Code.
 
 ## Before the clock
 
-The harness (`CLAUDE.md`, the `task-loop` skill, the `validator` and `reviewer` subagents, the
-permission settings and `docs/engineering-principles.md` / `docs/conventions.md`) was adapted from
-a colleague's prior submission of this challenge, which Fran studied beforehand, before the first
-logged prompt (2026-10-31 14:23). [Fran to confirm: which parts were adapted, which were written
-fresh, and whether the principles and conventions documents are part of that]
+The harness was adapted from a colleague's prior submission of this challenge, which Fran studied
+beforehand with the help of the advisor chat, before the first logged prompt (2026-10-31 14:23).
+`00-advisor-chat.md` lists which files came from that work (`CLAUDE.md`, the principles and
+conventions documents, the two subagents, the `task-loop` skill, the test rule and the settings)
+and the deliberate differences from the colleague's version.
 
-## 1. Fran caught the AI being wrong (planning)
+**A consequence worth stating:** when `raw-prompts.md` shows well-structured direction from the
+survey onward, the wording is often the advisor's and the decisions in it are Fran's
+(`00-advisor-chat.md`, "During the challenge").
 
-1. **It measured only false alarms.** The agent's first comparison of baseline methods scored them
-   on false-alarm rate and recommended method C. Fran: "you only measured false alarms, not
-   misses. A method that never fires also scores 0%." The follow-up (`docs/analysis/03`, `04a`,
-   `04b`, `05`) showed a single-week location verdict catches about 2% of halved weeks. That
-   produced the 4-week location rule.
-2. **It called the verdict "normal".** Fran: "'Normal' overclaims when only large drops would
-   show." Renamed "within expected range" everywhere.
-3. **It hardcoded week bounds into the contract.** Fran: "Week bounds must be derived from the
-   data (first/last complete weeks), never hardcoded dates." This is now enforced by a grep in
-   T-04's "Done when" and a test over all 20 accounts.
-4. **Variance ≈ mean.** The analysis found weekly variance close to the mean (median ratio 0.97,
-   `docs/analysis/01`) and the method rests on it. Fran: "the
-   variance~mean result may be because the seed is synthetic. Real volume is usually more
-   dispersed, and then C would over-fire." It became a known limitation with a next step, not
-   code.
-5. **Q9 wording.** Fran specified that `occurred_at` is treated as UTC per the schema and that the
-   timezone-blind look of the times goes to product as a data-quality question.
+## 1. Fran's own calls
 
-## 2. The AI argued against Fran, or Fran changed course
+- **Removing the trap list from the first survey prompt.** The advisor's draft listed specific
+  data traps; Fran flagged it as steering the agent with knowledge from the prior submission, and
+  the prompt was rewritten neutral (`00-advisor-chat.md`, 14:47). The neutral version is the one
+  in `raw-prompts.md` at 14:48.
+- **Proposing the stack.** Fran proposed Python + FastAPI, psycopg with raw SQL, Alembic,
+  server-rendered Jinja2 and uv, and asked the agent to argue against it: "Don't agree just
+  because it's my proposal." (`raw-prompts.md` 16:11; `00-advisor-chat.md`, 16:03.)
+- **The LLM summary-panel idea.** "the candidate I see is a summary panel giving a quick overview
+  of the week" (`raw-prompts.md` 16:36). Later designed and deferred (PLAN §10).
+- **Keeping `docs/CHALLENGE.md` committed,** against the advisor's recommendation to remove it
+  from history: "dont worry about the challenge.md. it stays commited" (`raw-prompts.md` 17:12;
+  `00-advisor-chat.md`, 17:09). This settles an earlier conflict: at 16:36 Fran had said it
+  "stays local and uncommitted", and a 17:11 draft of the next prompt said it had been untracked.
+  Fran confirmed at T-09 that staying committed is final.
+
+## 2. Fran caught the AI being wrong (planning)
+
+Several of these were first raised in the advisor chat; Fran decided them and sent them.
+
+1. **It measured only false alarms.** *(First raised by the advisor, `00-advisor-chat.md` 15:33.)*
+   The agent's first comparison of baseline methods scored them on false-alarm rate and
+   recommended method C. Fran: "you only measured false alarms, not misses. A method that never
+   fires also scores 0%." The follow-up (`docs/analysis/03`, `04a`, `04b`, `05`) showed a
+   single-week location verdict catches about 2% of halved weeks. That produced the 4-week
+   location rule.
+2. **It called the verdict "normal".** *(Advisor suggestion, 16:43.)* Fran: "'Normal' overclaims
+   when only large drops would show." Renamed "within expected range" everywhere.
+3. **It hardcoded week bounds into the contract.** *(Advisor suggestion, 16:43.)* Fran: "Week
+   bounds must be derived from the data (first/last complete weeks), never hardcoded dates." Now
+   enforced by a grep in T-04's "Done when" and a test over all 20 accounts.
+4. **Variance ≈ mean.** *(First raised by the advisor, `00-advisor-chat.md` 15:33.)* The analysis found weekly variance close to the mean (median ratio
+   0.97, `docs/analysis/01`) and the method rests on it. Fran: "the variance~mean result may be
+   because the seed is synthetic. Real volume is usually more dispersed, and then C would
+   over-fire." It became a known limitation with a next step, not code.
+5. **Q9 wording.** *(Advisor suggestion, 16:43.)* Fran specified that `occurred_at` is treated as
+   UTC per the schema and that the timezone-blind look of the times goes to product as a
+   data-quality question.
+
+## 3. The AI argued against Fran, or Fran changed course
 
 - **Single-week location rows (Q12).** Fran had decided single-week location counts are "shown
   with baseline and range but no verdict". The agent argued against it (a range of 1..13 at
@@ -55,19 +77,16 @@ fresh, and whether the principles and conventions documents are part of that]
 - **Summary module.** The agent proposed cutting the templated summary. Fran cut it partially: no
   module, but keep a one-line count rendered from the rows.
 - **Event-type filter.** Fran first said "keep; it's the first cut if time runs short". After the
-  reviewer's evidence of zero and near-zero baselines on filtered series, Fran: "Cut the
-  event-type filter now. Move it to 'next iteration' with the reviewer's reason".
-- **`docs/CHALLENGE.md`.** Fran's messages conflict. At 16:36: "docs/CHALLENGE.md stays local and
-  uncommitted." The reviewer found it already committed and pushed (`7e30e69`). The 17:11
-  version of the next prompt says "I've untracked docs/CHALLENGE.md and removed it from history";
-  the 17:12 version says "dont worry about the challenge.md. it stays commited". The file is
-  tracked today, which matches the last message. [Fran to confirm that "stays committed" is the
-  final decision]
-- **A placeholder in Fran's prompt.** The prompt contained the literal text "I didn't email the
-  recruiter because <your real reason>". The agent did not invent a reason; `PLAN.md` states only
-  the facts. The README does the same. [Fran to confirm: the real reason, if it should be stated]
+  reviewer's evidence of zero and near-zero baselines on filtered series (and the advisor's
+  recommendation, 17:09), Fran: "Cut the event-type filter now. Move it to 'next iteration' with
+  the reviewer's reason".
+- **Placeholders in Fran's prompts.** At 17:11–17:12 a prompt contained the literal text "I didn't
+  email the recruiter because <your real reason>" (an advisor template, per
+  `00-advisor-chat.md`). The agent did not invent a reason; `PLAN.md` and the README state only the
+  facts. The same happened again in the T-09 decisions ("Recruiter: <my real reason>").
+  [Fran to confirm: the reason, if it should be stated]
 
-## 3. The reviewer subagent caught the AI's plan errors (before any code)
+## 4. The reviewer subagent caught the AI's plan errors (before any code)
 
 Verdict `READY_WITH_FIXES`, 16 findings. The reviewer checked every decision the plan attributes
 to Fran against `raw-prompts.md` and found all of them backed. Errors it caught in the agent's
@@ -86,7 +105,7 @@ plan:
 - **No tests for the 4-week rule or the history cutoffs**, and the validator scheduled at the end
   instead of per task.
 
-## 4. The AI caught or admitted its own mistakes
+## 5. The AI caught or admitted its own mistakes
 
 Planning (from `02-planning-notes.md`): example numbers in the JSON contract were invented and
 labelled "illustrative" until the agent queried the real ones; the "mean = 171" figure was cited
@@ -99,49 +118,65 @@ added to `scripts/sql-ro.sh` at Fran's request blocked one of its own queries.
 Build (from `execution.md`):
 
 - **T-01:** the agent bundled `uv lock` into a larger shell command; the permission rules denied
-  it, correctly. It then split the file writes from the human command. Fran's first in-session
-  `uv lock` failed because the session sets `UV_FROZEN=1`; Fran ran `uv lock --system-certs` in
-  another terminal instead. The agent had also not anticipated the TLS certificate failure on
-  package downloads, which showed up as `UnknownIssuer` on the first `uv run`; it worked around it
-  with `uv sync --frozen --system-certs`. [Fran to confirm whether the certificate problem should
-  be mentioned in the README for reviewers]
+  it, correctly. Fran's first in-session `uv lock` failed because `settings.json` sets
+  `UV_FROZEN=1` for the session (an advisor mistake, per `00-advisor-chat.md`); Fran ran
+  `uv lock --system-certs` in another terminal. The agent had not anticipated the TLS certificate
+  failure on package downloads (`UnknownIssuer`); it worked around it with
+  `uv sync --frozen --system-certs`. The README now has a one-line troubleshooting note.
 - **T-04:** the agent's own test expected the 12-week series to start on 2026-04-27; the correct
   start is 2026-05-04. It fixed the test, not the query, and logged it. The first heredoc for the
   query file also failed to parse and was rewritten with the file tool.
 - **T-06:** a lax date parser would have silently accepted timestamps as the `week` parameter; the
-  agent added a strict `YYYY-MM-DD` pattern. This is an agent decision. [Fran to confirm]
+  agent added a strict `YYYY-MM-DD` pattern to the API. Fran reviewed this and the other
+  build-time choices at T-09. **But** the final reviewer found the page route never applied that
+  pattern: `/?week=20260720` and `/?week=2026-W30-1` were silently accepted while the API returned
+  422. Opened as T-10.
 - **T-07:** the first "flagged row first" test used the burst week, in which every account-6
   location is flagged, so there was nothing to order. A second candidate week would have passed
   even without any sorting, because the flagged location was alphabetically first. The final test
   uses account 6, week 2026-05-18, where Site G (flagged) would sort after Site A by name, and it
   also asserts the page's row order equals the JSON's.
+- **T-08:** the agent's own count of `[Fran to confirm]` markers in the README was off by one
+  (logged 3, actually 2), caught by the final reviewer.
 
-## 5. Where Fran redirected or tightened the work
+## 6. Where Fran redirected or tightened the work
 
 - **T-04's test location.** `.claude/rules/tests.md` says integration tests go through the FastAPI
   app. The endpoint doesn't exist until T-06, so Fran confirmed in `TASKS.md` that T-04's tests
   call `queries.py` directly against the real DB. Recorded as a "Confirmed deviation".
-- **T-07's risk tag.** Fran raised it to `high`: "Reload survival is an explicit challenge
-  requirement, so the validator should check it over HTTP." The validator then ran curl against
-  the rebuilt server and compared the page with the JSON.
+- **T-07's risk tag.** *(Advisor recommendation, `00-advisor-chat.md` "Build".)* Fran raised it to
+  `high`: "Reload survival is an explicit challenge requirement, so the validator should check it
+  over HTTP." The validator then ran curl against the rebuilt server and compared the page with
+  the JSON.
 - **T-03's log check.** The agent tried to read `docker compose ps` and `docker compose logs` in
-  one call; Fran rejected the call and pasted the logs by hand. [Fran to confirm why]
-- **The hand-verified number.** Fran re-ran the §9 SQL by hand (42) and added two counterfactuals
-  of their own: without `DISTINCT` the count is 43, and with `DISTINCT` but UTC week bounds it is
-  also 43.
+  one call; Fran rejected the call and pasted the logs by hand. [Fran to confirm: why]
+- **The hand-verified number.** Fran re-ran the §9 SQL by hand (42), plus the agent's two
+  counterfactual queries from PLAN §9: without `DISTINCT` the count is 43, and with `DISTINCT` but
+  UTC week bounds it is also 43. The counterfactual figures were the agent's; Fran re-ran them.
 - **Early claims verified by hand.** After the first survey Fran checked two of the agent's claims
   (12 duplicate groups; "Site A" used by 19 accounts) and reported both held.
 
-## 6. Where the harness limited the AI
+## 7. Where the harness limited the AI
 
 The agent never committed, never ran `docker compose up/down` or `uv lock`, and stopped with an
-`AWAITING` entry each time (T-01, T-03, T-07). The `validator` ran with fresh context on all
-high-risk tasks and returned PASS on T-03–T-07. Two of its own caveats on T-03 are worth keeping:
-it relied on pasted logs rather than running `docker compose logs`, and it read ruff's and
-mypy's success messages rather than their exit codes.
+`AWAITING` entry each time (T-01, T-03, T-07, T-08, T-09). The `validator` ran with fresh context
+on all high-risk tasks and returned PASS on T-03–T-07. Two of its own caveats on T-03 are worth
+keeping: it relied on pasted logs rather than running `docker compose logs`, and it read ruff's
+and mypy's success messages rather than their exit codes. Mistakes in the advisor's own harness
+work (the `sql-ro.sh` meta-command bypass, the session-wide `UV_FROZEN=1`, an outdated `/agents`
+instruction, the leaky first survey prompt, the placeholder template) are listed in
+`00-advisor-chat.md`.
 
-## 7. Not yet done
+## 8. Clean-machine run and final review
 
-- **[Fran to confirm]** every item marked above.
-- The clean-machine run, the §9 hand-verification on the fresh clone and the timing are Fran's
-  (T-08 steps 1–3, 6); nothing here claims they have happened.
+- **T-08 clean-machine run (Fran, 18:22–18:23).** Fresh clone of the GitHub remote into a temporary
+  folder; `docker compose -p dash247-clean up -d --build`; `HTTP/1.1 200 OK` about 26 s after
+  starting; `docker compose -p dash247-clean run --rm app uv run --frozen pytest -q` gave
+  `56 passed`; the §9 SQL gave `42`; `down -v` cleaned up. Two caveats:
+  - every Docker layer was cached, so image pulls and `uv sync` inside the container were not
+    exercised; a cold build is still untimed;
+  - the clone predates T-08, so it ran the T-07 tree with the skeleton README (same run and test
+    commands).
+- **T-09 final review** (reviewer subagent, FINAL mode): `READY_WITH_FIXES`, with 3 blockers (T-08
+  not pushed, unresolved markers, the README and this file disagreeing on the harness origin),
+  4 should-fix items and 2 nits. Report and Fran's decision on each are in `execution.md`.

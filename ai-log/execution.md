@@ -253,3 +253,122 @@ Observation: the psql command line appears echoed inside the pytest output; read
 ### T-08 · attempt 1 · self-check · PASS
 Done-when 1 (200 from fresh clone, elapsed <= 15 min: ~26 s warm cache), 2 (56 passed), 3 (42), 4 (no TODO; "another day|duplicate" match), 5 (reflection has "tools"/"model"), 6 (down -v ran) all satisfied.
 PENDING HUMAN: resolve the `[Fran to confirm]` marks in README.md (3) and ai-log/03-reflection.md (9) before submission; they are drafts under Fran's name.
+
+### T-09 · start · risk:low
+
+### T-09 · attempt 1 · human-command · AWAITING
+`docker compose ps` shows no containers for the main stack (after the T-08 clean-machine run). The FINAL reviewer must run pytest and independent SQL against the seeded DB, so the engineer needs to run `docker compose up -d --build` first.
+
+### T-09 · attempt 1 · human-command · PASS
+Engineer ran `docker compose up -d --build`; reported "app is up".
+
+### T-09 · attempt 1 · reviewer (FINAL) · report verbatim
+mode: FINAL
+verdict: READY_WITH_FIXES
+
+findings (most severe first):
+
+- [BLOCKER] The T-08 commit is not pushed, so the public repo still has the skeleton README.
+  where: git remote state
+  why it matters to the evaluator: they clone the remote. Right now it has no interpretation, trade-offs, deferrals or reflection, and the challenge says to submit only "after README, PLAN.md, and AI log are committed".
+  evidence: `git status -sb` gives `## main...origin/main [ahead 1]`. origin/main is 7ab5a9d (T-07) and HEAD is 05bd7ec (T-08).
+  suggested fix: after resolving the items below, commit T-09 and push. Then check on GitHub, logged out, that the repo is public.
+
+- [BLOCKER] 2 `[Fran to confirm]` markers remain in README.md and 9 in the reflection (the log's figure of 3 for README is off by one). The reflection still says "DRAFT written by the agent".
+  where: README.md:134, README.md:202; ai-log/03-reflection.md:3-7, 14, 22, 64, 68, 106, 112, 128, 145
+  why it matters to the evaluator: the README and reflection look unfinished and agent-written. That hits Communication and "sanitized/one-shot log" scoring directly.
+  evidence: `grep -rn "Fran to confirm" README.md ai-log/03-reflection.md`
+  suggested fix: resolve each one. Keep the "drafted by agent, reviewed by Fran" provenance line, but drop "DRAFT".
+
+- [BLOCKER] README and reflection give different origins for the harness. Only the reflection's version is backed by raw-prompts.
+  where: README.md:196-199 vs ai-log/03-reflection.md:19-23
+  why it matters to the evaluator: README says "adapted from a colleague's recommendation given in a conference". The reflection says "adapted from a colleague's prior submission of this challenge". An evaluator reading both sees one story change into another on the most integrity-sensitive point in the repo.
+  evidence: raw-prompts.md:744-745 (Fran): "the harness was adapted from a colleague's prior submission of this challenge, which I studied beforehand." Nothing in raw-prompts mentions a "conference".
+  suggested fix: Fran picks the accurate wording and uses it in both files. If the README wording is what's true, add a sentence to the reflection saying the earlier prompt was corrected.
+
+- [SHOULD] The agent-context files still contain unfilled template placeholders.
+  where: CLAUDE.md:3 (`<TICKET-ID> — <one-line feature>`), CLAUDE.md:42 (`<FILL: single-source-of-truth rule ...>`), docs/conventions.md:1, 15, 16 (`<TICKET-ID>`, `<FILL>`), .claude/rules/tests.md:7 (`<FILL: ...>`)
+  why it matters to the evaluator: committed agent context is the "strong signal" the challenge mentions. Left as a template, it looks copied rather than adapted, which stacks badly with the finding above.
+  evidence: `grep -rn "<FILL\|<TICKET-ID>" CLAUDE.md docs .claude`
+  suggested fix: fill them in. DASH-247; the SoT rule is "SQL owns dates/dedup/zero-fill; Python never computes dates" (already in queries.py's docstring); tests.md should point at PLAN §9. Mention in the log that this was done at the end.
+
+- [SHOULD] The page silently accepts week formats that the API rejects. README claims otherwise.
+  where: app/main.py `page()`, which calls `parse_week(week)` without `WEEK_PATTERN`. Python 3.12 `date.fromisoformat` accepts `20260720` and `2026-W30-1`.
+  why it matters to the evaluator: README:130 says "Invalid input is rejected, never coerced", and conventions.md bans silent coercion. Typing a URL by hand reproduces it in seconds.
+  evidence: `/api/accounts/6/weekly-report?week=20260720` gives 422. `/?account_id=6&week=20260720` gives 200 with 2026-07-20 selected. `/?account_id=6&week=2026-W30-1` gives 200.
+  suggested fix: in `parse_week`, check `re.fullmatch(WEEK_PATTERN, raw)` before `fromisoformat` and raise InvalidWeek otherwise. Add `20260720` to the page error test.
+
+- [SHOULD] The reflection's "Not yet done" section is stale. It contradicts execution.md.
+  where: ai-log/03-reflection.md:143-147
+  why it matters to the evaluator: it says "nothing here claims [the clean-machine run] happened", but execution.md records "T-08 · attempt 1 · human-command · PASS" with pasted output.
+  evidence: ai-log/execution.md, T-08 PASS entry (26 s, 56 passed, 42, down -v).
+  suggested fix: replace it with a summary of the run, including the two caveats below.
+
+- [SHOULD] The only clean-machine run used a warm Docker cache and a clone from before T-08. A cold build has never been exercised.
+  where: ai-log/execution.md T-08 PASS; raw-prompts.md:803-811 (all layers `CACHED`)
+  why it matters to the evaluator: the 15-minute run is a hard requirement. Pulling images and running `uv sync --frozen` inside the container are untested. This is the same machine that hit TLS `UnknownIssuer` on uv downloads.
+  evidence: "All 10 Dockerfile layers were CACHED ... (image pulls and `uv sync` were not exercised)"; "the clone's README was the skeleton".
+  suggested fix: after pushing, do one more fresh clone with `docker compose -p x build --no-cache` (or `--pull`), time it, and log it. If that isn't done, README:183 already admits it. Keep that line honest.
+
+- [NIT] `uv run mypy app tests` fails. The documented `mypy app` passes.
+  where: tests/integration/test_api.py:31 `return matches[0]`
+  evidence: `error: Returning Any from function declared to return "dict[str, Any]" [no-any-return]`
+  suggested fix: annotate a local first, the same pattern as `_report`. Or leave it, since tests are outside the documented mypy scope.
+
+- [NIT] The README "Time" line gives the budget but not the actual time.
+  where: README.md:212 (trailing space as well)
+  evidence: first prompt 14:23, last commit 18:29, so about 4.1 h actual.
+  suggested fix: state the actual elapsed time.
+
+holds up:
+- Tests and linting: `uv run pytest -q` gives 56 passed (1 Starlette deprecation warning, already noted in the README). `ruff check` passes, `ruff format --check` passes (35 files), and `mypy app` reports no issues.
+- I re-derived 2 headline numbers with my own SQL (a GROUP BY for dedup and `timezone()` instead of AT TIME ZONE). Both match the API.
+  - Account 6, week 2026-07-20: total count 87. The 8 baseline weeks are 53, 880, 102, 59, 76, 69, 79, 50, median 72.5. API: 87 / 72.5 / 52..95.
+  - Site A over the 4 weeks: 7+4+2+9 = 22, expected 4 × median(3,8,4,3,49,5,7,9) = 24. API: 22 / 24.0.
+- The hand-verified number (account 1, week 2026-07-06) is 42 when I recompute it.
+- Edge cases behave as documented: unknown account gives 404; a non-Monday or a week out of range gives 422. Account 20 (no events) gives a well-formed 200 and the page says "No activity recorded". The count line shows "15 not judged" on weeks without history.
+- Requirement checklist:
+  - Aggregation endpoint: met (app/db/queries.py, app/report.py).
+  - UI with state that survives a reload: met (app/templates/report.html, plain GET with account and week in the URL).
+  - Tests with a one-line run command: met (README "Run tests").
+  - Schema and migrations: met (migrations/versions/0001_seed_schema.py).
+  - Stack and why: met.
+  - Interpretation, assumptions, trade-offs, deferrals, "another day": met.
+  - PLAN.md with an LLM section: met (§10). It was last touched in 770e861, before T-01, so it has not been retrofitted.
+  - AI log: partially met (raw prompts, execution log and reflection are present; the markers and contradiction above remain).
+  - Public repo with everything committed: missing until pushed.
+- Git history has one commit per task (T-01..T-08), each named for its decision, with the plan commit first.
+
+what I would cut: nothing
+
+### T-09 · decisions on findings
+AWAITING engineer: each finding needs fixed (task id) / deferred (README line) / rejected (reason).
+
+### T-09 · decisions on findings (engineer, verbatim prompt in raw-prompts.md)
+1. [BLOCKER] T-08 not pushed -> **deferred to engineer**: Fran pushes after the fixes below.
+2. [BLOCKER] `[Fran to confirm]` markers -> **fixed (T-09, docs)** except two:
+   - models -> "Opus 5.5 and Sonnet 5.5; advisor chat on claude.ai, same models" (README, reflection);
+   - advisor chat -> summarized in ai-log/00-advisor-chat.md (added by Fran); referenced from README AI usage and the reflection;
+   - CHALLENGE.md -> staying committed is final (reflection §1);
+   - TLS -> one-line troubleshooting note added to README "Run locally";
+   - agent build-time choices -> Fran reviewed them; marker removed (README);
+   - "DRAFT" removed; provenance line "Drafted by the agent, reviewed and corrected by me (Fran)";
+   - **still open:** recruiter reason and T-03 docker-call reason. Both arrived as the literal placeholder "<my real reason>"; the agent did not invent them. Markers kept (reflection §3, §6).
+3. [BLOCKER] harness origin -> **fixed (T-09, docs)**: README now uses the reflection's wording ("a colleague's prior submission of this challenge, which I studied beforehand, with the help of the advisor chat (see ai-log/00-advisor-chat.md)"). The "conference" sentence was an edit made to README.md outside the agent; it is gone.
+4. [SHOULD] template placeholders in CLAUDE.md, docs/conventions.md, .claude/rules/tests.md -> **deferred to engineer**: Fran fills them at the end with the reviewer's suggested values (DASH-247; SoT rule "SQL owns dates/dedup/zero-fill; Python never computes dates"; tests.md points at PLAN §9). Agent is not allowed to edit docs/ or .claude/. Not done at the time of this entry.
+5. [SHOULD] page accepts loose week formats -> **fixed in T-10** (risk:high, new task): one strict check shared by page and API; page test cases for 20260720 and 2026-W30-1.
+6. [SHOULD] stale "Not yet done" section -> **fixed (T-09, docs)**: replaced by reflection §8 (T-08 run summary with both caveats, plus the T-09 summary).
+7. [SHOULD] cold build never exercised -> **deferred to engineer**: Fran runs a no-cache fresh-clone build after pushing and pastes the output. Until then README "Deferred" says the cold build is not yet timed.
+8. [NIT] `mypy app tests` fails on test_api.py:31 -> **fixed in T-10** (folded in).
+9. [NIT] Time line -> **pending engineer**: README states the planning time and holds "[Fran to confirm: final figure, pending]" for the actual total.
+Also at Fran's request, reflection annotated per 00-advisor-chat.md: advisor-originated items marked in §2 (false alarms 15:33; "normal", week bounds, Q9 at 16:43) and §6 (T-07 risk, "Build" row); synthetic dispersion annotated as advisor-originated per Fran's T-09 statement (not listed in 00-advisor-chat.md); hand-verification counterfactuals corrected to "the agent's figures, re-run by Fran". New §1 "Fran's own calls": trap list removed from the first survey prompt, stack proposal, LLM summary-panel idea, CHALLENGE.md kept committed.
+
+### T-09 · attempt 1 · self-check · PASS
+1. Reviewer FINAL report appended verbatim above.
+2. Every finding has a recorded decision above (fixed in T-09 docs / fixed in T-10 / deferred to engineer with the open step named).
+3. On the current tree: `uv run pytest -q` -> 56 passed, 1 warning; `ruff check .` -> All checks passed; `ruff format --check .` -> 37 files already formatted; `mypy app` -> Success (8 files). T-10 re-runs all of these, plus `mypy app tests`, on the final tree.
+PENDING HUMAN: recruiter reason and T-03 docker-call reason (both sent as "<my real reason>"); fill placeholders in CLAUDE.md, docs/conventions.md, .claude/rules/tests.md; final time figure; push; cold no-cache fresh-clone build.
+
+### T-09 · follow-up (docs)
+- Reflection §2 item 4 annotation updated: synthetic dispersion now sourced to `00-advisor-chat.md` 15:33 (row added by Fran).
+- Recruiter and T-03 reasons: the reply again contained template text ("<e.g. \"I didn't want to block on a reply inside the time budget\">", "<your reason, or: \"drop that line\">"), not a stated reason. Not filled; markers kept.

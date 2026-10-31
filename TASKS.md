@@ -269,7 +269,7 @@ deps: [T-02, T-07]
 
 ---
 
-### [ ] T-09 · risk:low · Final adversarial review
+### [x] T-09 · risk:low · Final adversarial review
 deps: [T-08]
 
 **Scope** (PLAN §11 row 9): run the `reviewer` subagent in FINAL mode on the repo and diff. Relay
@@ -282,3 +282,34 @@ fall outside an existing task's scope.
    or rejected (with reason).
 3. `uv run pytest -q`, `uv run ruff check .`, `uv run ruff format --check .` and `uv run mypy app`
    exit 0 on the final tree.
+
+---
+
+### [ ] T-10 · risk:high · Strict week parsing shared by the page and the API
+deps: [T-09]
+
+**Origin:** T-09 final review finding (SHOULD), approved by the engineer. The page route calls
+`parse_week` without `WEEK_PATTERN`; Python 3.12 `date.fromisoformat` accepts `20260720` and
+`2026-W30-1`, so the page silently coerces formats the API rejects with 422 (conventions: "never
+coerce silently"; README: "Invalid input is rejected, never coerced").
+
+**Scope** (PLAN §8 `week` rule):
+- `app/main.py`: one strict `YYYY-MM-DD` check inside `parse_week`, used by both routes; the
+  API keeps returning 422 with a message, the page renders the message with 422.
+- `tests/integration/test_page.py`: page cases `20260720` and `2026-W30-1` → 422 with a message.
+- `tests/integration/test_api.py:31`: annotate a local so `uv run mypy app tests` passes
+  (folded-in NIT).
+
+**Done when**
+1. `uv run pytest tests/integration/test_page.py tests/integration/test_api.py -q` passes, and the
+   page error test includes `20260720` and `2026-W30-1` (each 422 with `role="alert"`), while the
+   API's existing malformed cases (`20260720`, `2026-07-20T00:00:00`, `2026-13-01`, `last-week`)
+   still give 422.
+2. `grep -c "fromisoformat" app/main.py` returns 1: there is one parsing path.
+3. `uv run pytest -q`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy app`
+   and `uv run mypy app tests` exit 0.
+4. Against the running server after `docker compose up -d --build app` (human):
+   `curl -s -o /dev/null -w "%{http_code}" "http://localhost:8000/?account_id=6&week=20260720"`
+   prints `422`, and the same for `week=2026-W30-1`; `week=2026-07-20` prints `200`.
+
+**Out of scope:** any other validation change.
