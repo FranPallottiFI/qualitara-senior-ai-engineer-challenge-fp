@@ -64,7 +64,7 @@ deps: [T-01]
 
 ---
 
-### [ ] T-03 · risk:high · Migration, seed loader, Dockerfile, compose `app` service
+### [x] T-03 · risk:high · Migration, seed loader, Dockerfile, compose `app` service
 deps: [T-01]
 
 **Scope** (PLAN §6 Infrastructure, §7 Migration):
