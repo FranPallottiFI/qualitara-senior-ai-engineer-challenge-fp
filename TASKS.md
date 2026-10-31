@@ -45,7 +45,7 @@ deps: []
 
 ---
 
-### [ ] T-02 · risk:low · README skeleton
+### [x] T-02 · risk:low · README skeleton
 deps: [T-01]
 
 **Scope** (PLAN §6, §11): replace the starter README with a skeleton.
