@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "UV_FROZEN": "1"
+  },
+  "permissions": {
+    "defaultMode": "default",
+    "disableBypassPermissionsMode": "disable",
+    "allow": [
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git diff)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(uv run pytest)",
+      "Bash(uv run pytest *)",
+      "Bash(uv run ruff check *)",
+      "Bash(uv run ruff format *)",
+      "Bash(uv run mypy *)",
+      "Bash(uv run alembic upgrade head)",
+      "Bash(uv run alembic current)",
+      "Bash(uv run alembic history *)",
+      "Bash(uv run alembic revision *)",
+      "Bash(uv sync --frozen)",
+      "Bash(uv tree *)",
+      "Bash(uv lock --check)",
+      "Bash(docker compose ps)",
+      "Bash(docker compose logs *)",
+      "Bash(./scripts/sql-ro.sh *)",
+      "Bash(curl -s http://localhost:*)",
+      "Bash(curl -si http://localhost:*)"
+    ],
+    "ask": [
+      "Edit(./pyproject.toml)",
+      "Edit(./uv.lock)",
+      "Edit(./docker-compose.yml)",
+      "Edit(./PLAN.md)",
+      "Edit(./docs/**)",
+      "Edit(./.claude/**)"
+    ],
+    "deny": [
+      "Bash(git commit *)",
+      "Bash(git commit)",
+      "Bash(git push *)",
+      "Bash(git reset --hard *)",
+      "Bash(git checkout -- *)",
+      "Bash(git restore *)",
+      "Bash(git clean *)",
+      "Bash(git branch -D *)",
+      "Bash(git rebase *)",
+      "Bash(git tag *)",
+      "Bash(uv add *)",
+      "Bash(uv remove *)",
+      "Bash(uv lock)",
+      "Bash(uv lock --upgrade*)",
+      "Bash(uv sync)",
+      "Bash(uv sync --upgrade*)",
+      "Bash(uv sync --no-frozen*)",
+      "Bash(uv pip *)",
+      "Bash(uv tool *)",
+      "Bash(uvx *)",
+      "Bash(pip *)",
+      "Bash(pip3 *)",
+      "Bash(python -m pip *)",
+      "Bash(python3 -m pip *)",
+      "Bash(pipx *)",
+      "Bash(poetry *)",
+      "Bash(uv run alembic downgrade *)",
+      "Bash(uv run alembic stamp *)",
+      "Bash(docker compose up)",
+      "Bash(docker compose up *)",
+      "Bash(docker compose down)",
+      "Bash(docker compose down *)",
+      "Bash(docker compose exec *)",
+      "Bash(docker volume rm *)",
+      "Bash(docker system prune*)",
+      "Bash(rm -rf *)",
+      "Bash(sudo *)",
+      "Bash(wget *)",
+      "Edit(./seed/**)",
+      "Write(./seed/**)",
+      "Edit(./ai-log/raw-prompts.md)",
+      "Write(./ai-log/raw-prompts.md)",
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)"
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/log_prompt.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
